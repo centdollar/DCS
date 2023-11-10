@@ -1,0 +1,12 @@
+db/*
+greybox_tmp/*
+incremental_db/*
+output_files/*
+simulation/*
+assignement_defaults.qdf
+qar_info.json
+*_bb.v
+*.rpt
+*.qdf
+*.qsf
+*.qip
