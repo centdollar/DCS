@@ -645,24 +645,25 @@ else begin // Normal Operation
                         TB = R[Rj1];
                     end
                     if (Ri1 == Rj2) begin
-                        TB = TALUL;
+                        TA = TALUL;
                     end
                     else begin
-                        TB = R[Ri1];
+                        TA = R[Ri1];
                     end
                     if (Ri1 == Ri2) begin
-                        TB = TALUL;
+                        TA = TALUL;
                     end
                     else begin
-                        TB = R[Ri1];
+                        TA = R[Ri1];
                     end
                 end
 
-                else if (Ri1 == Ri2) begin
-                    TA = TALUH; // <-- DF-FU
-                end
                 else begin
-                    TA = R[Ri1]; 
+                    if (Ri1 == Ri2) begin TA = TALUH; end
+                    else begin TA = R[Ri1]; end
+                    
+                    if (Rj1 == Rj2) begin TB = TALUH; end
+                    else begin TB = R[Rj1]; end
                 end
             end
             SWAP_IC, MUL_IC, DIV_IC: begin
