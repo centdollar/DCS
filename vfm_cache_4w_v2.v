@@ -147,7 +147,7 @@ always @(posedge Clock) begin : Cache_Controller
     if(!Resetn) begin // active low reset
         Cache_Controller_State = IDLE;
         Writeback_State        = WRITEBACK0;
-        Fetch_State            = FETCH1;
+        Fetch_State            = FETCH0;
         Done                   = 1'd0;
         writeback              = 1'd0;
         fetch                  = 1'd0;
@@ -173,8 +173,6 @@ always @(posedge Clock) begin : Cache_Controller
                     end
                     else begin
                         Cache_Controller_State = FETCH;
-                        Fetch_State = FETCH1;
-                        cam_wr = 1'd1;
                     end
                 end
                 else begin // -> HIT
@@ -223,7 +221,8 @@ always @(posedge Clock) begin : Cache_Controller
 
                     // TODO: remoce fetch0
                     FETCH0: begin // First Fetch cycle, write new tag to CAM and request word zero of block from main mem
-                        
+                        Fetch_State = FETCH1;
+                        cam_wr = 1'd1;
                     end
                     FETCH1: begin // Word zero output of main mem is ready, begin writing to cache mem
                         cam_wr = 1'd0;
@@ -239,7 +238,7 @@ always @(posedge Clock) begin : Cache_Controller
                         end
                     end
                     FETCH3: begin
-                        Fetch_State = FETCH1; // for next fetch operation
+                        Fetch_State = FETCH0; // for next fetch operation
                         Cache_Controller_State = IDLE; // Fetch operation is complete
                         fetch = 1'd0;
                         set_replace[group] = set_replace[group] + 1'd1; // next time replace the next set
