@@ -43,6 +43,10 @@ localparam [5:0] RRC_IC  = 6'b001101 ; // Rotate Right Through Carry
     //SIMD (vector) - to be implemented later
 localparam [5:0] VADD_IC = 6'b001110 ; // Vector Add
 localparam [5:0] VSUB_IC = 6'b001111 ; // Vector Subtract
+localparam [5:0] VADDC_IC = 6'b100000 ; // Vector Add
+localparam [5:0] VSUBC_IC = 6'b100001 ; // Vector Subtract
+
+
 
 localparam [5:0] MUL_IC  = 6'b010000 ; // Multiply
 localparam [5:0] DIV_IC  = 6'b010001 ; // Divide
@@ -291,7 +295,7 @@ else begin // Normal Operation
                     default: PC = PC;
                 endcase
             end // JMP_IC
-            ADD_IC, SUB_IC, ADDC_IC, SUBC_IC, VADD_IC, VSUB_IC, NOT_IC, AND_IC, OR_IC, XOR_IC, ROTL_IC, ROTR_IC, SHRL_IC, SRA_IC, RLN_IC, RLZ_IC, RRN_IC, RRZ_IC : begin
+            ADD_IC, SUB_IC, ADDC_IC, SUBC_IC, VADD_IC, VSUB_IC, VADDC_IC, VSUBC_IC, NOT_IC, AND_IC, OR_IC, XOR_IC, ROTL_IC, ROTR_IC, SHRL_IC, SRA_IC, RLN_IC, RLZ_IC, RRN_IC, RRZ_IC : begin
                 R[IR3[7:4]] = TALUH;
                 SR = TSR;
             end // ADD_IC, SUB_IC, ADDC_IC, SUBC_IC, NOT_IC, AND_IC, OR_IC, SRA_IC, RRC_IC
@@ -394,7 +398,7 @@ else begin // Normal Operation
                 TALUH = TALUout[13:0];
             end // SUB_IC, SUBC_IC
 
-            VADD_IC: begin
+            VADD_IC, VADDC_IC: begin
 
                 // Add the two parts of the vector independently
                 TALUout[14:8] = TA[13:7] + TB[6:0];
@@ -412,8 +416,27 @@ else begin // Normal Operation
                 if (TALUout[7:0] == 7'h0000) begin TSR[4] = 1; end else begin TSR[4] = 0; end
 
                 TALUH = {TALUout[14:8], TALUout[6:0]};
-            end // VADD_IC
+            end // VADD_IC, VADDC_IC
 
+            VSUB_IC, VSUBC_IC: begin
+
+                // Add the two parts of the vector independently
+                TALUout[14:8] = TA[13:7] - TB[6:0];
+                TALUout[7:0] = TA[6:0] - TB[6:0];
+
+
+                TSR[11] = TALUout[15]; // Carry
+                TSR[10] = TALUout[14]; // Negative
+                TSR[9] = ((TA[13] ~^ TB[13]) & TA[13]) ^ (TALUout[13] & (TA[13] ~^ TB[13])); // V Overflow
+                if (TALUout[14:8] == 7'h0000) begin TSR[8] = 1; end else begin TSR[8] = 0; end
+
+                TSR[7] = TALUout[7]; // Carry
+                TSR[6] = TALUout[7]; // Negative
+                TSR[5] = ((TA[6] ~^ TB[6]) & TA[6]) ^ (TALUout[6] & (TA[6] ~^ TB[6])); // V Overflow
+                if (TALUout[7:0] == 7'h0000) begin TSR[4] = 1; end else begin TSR[4] = 0; end
+
+                TALUH = {TALUout[14:8], TALUout[6:0]};
+            end // VSUB_IC, VSUBC_IC
 
             MUL_IC: begin
                 TALUout = TA * TB;
@@ -625,6 +648,18 @@ else begin // Normal Operation
                 end
                 TB = {10'b0000000000, IR1[3:0]};
             end // ADDC_IC, SUBC_IC
+
+            VADDC_IC, VSUBC_IC: begin
+                if (Ri1 == Ri2) begin
+                    TA = TALUH; // <-- DF-FU
+                end
+                else begin
+                    TA = R[Ri1]; 
+                end
+                TB = {10'b0000000000, IR1[3:0]};
+            end // ADDC_IC, SUBC_IC
+
+
 
                 // TODO: Fix this and make it work
                 //       draw it out and you will see the pattern
