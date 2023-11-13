@@ -78,6 +78,11 @@ localparam [5:0]  RET_IC  = 6'b011100;
 localparam [5:0]  IN_IC   = 6'b011101;
 localparam [5:0]  OUT_IC  = 6'b011110;
 
+
+// Compare instruction for loops
+localparam [5:0]  CMP_IC  = 6'b110000;
+
+
 //----------------------------------------------------------------------------
 //-- Declare internal signals
 //----------------------------------------------------------------------------
@@ -295,9 +300,14 @@ else begin // Normal Operation
                     default: PC = PC;
                 endcase
             end // JMP_IC
-            ADD_IC, SUB_IC, ADDC_IC, SUBC_IC, VADD_IC, VSUB_IC, VADDC_IC, VSUBC_IC, NOT_IC, AND_IC, OR_IC, XOR_IC, ROTL_IC, ROTR_IC, SHRL_IC, SRA_IC, RLN_IC, RLZ_IC, RRN_IC, RRZ_IC : begin
-                R[IR3[7:4]] = TALUH;
-                SR = TSR;
+            CMP_IC, ADD_IC, SUB_IC, ADDC_IC, SUBC_IC, VADD_IC, VSUB_IC, VADDC_IC, VSUBC_IC, NOT_IC, AND_IC, OR_IC, XOR_IC, ROTL_IC, ROTR_IC, SHRL_IC, SRA_IC, RLN_IC, RLZ_IC, RRN_IC, RRZ_IC : begin
+                if (CMP_IC == IR3[13:8]) begin
+                    SR = TSR;
+                end 
+                else begin 
+                    R[IR3[7:4]] = TALUH;
+                    SR = TSR;
+                end
             end // ADD_IC, SUB_IC, ADDC_IC, SUBC_IC, NOT_IC, AND_IC, OR_IC, SRA_IC, RRC_IC
             MUL_IC, DIV_IC: begin
                 R[IR3[7:4]] = TALUH;
@@ -384,7 +394,7 @@ else begin // Normal Operation
                 end
                 TALUH = TALUout[13:0];
             end // ADD_IC, ADDC_IC
-            SUB_IC, SUBC_IC: begin
+            SUB_IC, SUBC_IC, CMP_IC: begin
                 TALUout = TA - TB;
                 TSR[11] = TALUout[14]; // Carry
                 TSR[10] = TALUout[13]; // Negative
@@ -618,7 +628,6 @@ else begin // Normal Operation
                 IPDR = Input_Ps;
             end
             OUT_IC: begin
-                // TODO: Fix truncated value, assigning 14 bits to 8
                 if (Ri1 == Ri2) OPDR = TALUH[7:0];
                 else OPDR = R[Ri1][7:0];
             end
@@ -701,6 +710,14 @@ else begin // Normal Operation
                     else begin TB = R[Rj1]; end
                 end
             end
+
+            CMP_IC: begin
+                if (Ri1 == Ri2) begin TA = TALUH; end
+                else begin TA = R[Ri1]; end
+
+                TB = Rj1;    
+            end
+
             SWAP_IC, MUL_IC, DIV_IC: begin
                 // DF-FU; Ri2 below is right for every previous instruction that returns a result in Ri2; 
                 // need to modify for a previous SWAP if the value is to be Rj2
@@ -814,6 +831,12 @@ else begin // Normal Operation
         (IR4[13:8] == CALL_IC) || 
         (IR4[13:8] == RET_IC)) begin
         stall_mc0 = 0; 
+
+        // after this also reset the Ri1 Ri2 Ri3 and Rj1 Rj2 Rj3 regs
+        Ri2 = 4'd0;
+        Rj2 = 4'd0;
+        Ri3 = 4'd0;
+        Rj3 = 4'd0;
     end
 
 //---------------------------------------------------------------------------
