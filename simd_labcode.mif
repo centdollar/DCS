@@ -69,8 +69,8 @@ CONTENT BEGIN
 61:00111101011001;  %  vsub r5 r9   %
 62:00000100110101;  %  st r3 r5 m[converted_to_upper]   %
 63:10000001010000;  %  jumpOffset  %
-64:00011100110001;  %  @lowerToUpper addc r3 #1   %
-65:00011111110000;  %  addc r15 #0   %
+64:00011111110000;  %  @lowerToUpper addc r15 #0   %
+65:00011100110001;  %  addc r3 #1   %
 66:00000000110101;  %  ld r3 r5 m[lower_array]   %
 67:10000000000000;  %  jumpOffset  %
 68:00111101011001;  %  vsub r5 r9   %
@@ -80,7 +80,7 @@ CONTENT BEGIN
 72:00010000011110;  %  jz0 r1 @lowerToUpper   %
 73:11111111110110;  %  jumpOffset  %
 74:00011111110000;  %  addc r15 #0   %
-75:01001000110011;  %  xor r3 r3   %
+75:00011000110011;  %  sub r3 r3   %
 76:00011111110001;  %  addc r15 #1   %
 77:01111011110000;  %  out r15 r0   %
 78:00000000110101;  %  ld r3 r5 m[upper_array]   %
@@ -88,8 +88,8 @@ CONTENT BEGIN
 80:00111001011001;  %  vadd r5 r9   %
 81:00000100110101;  %  st r3 r5 m[converted_to_lower]   %
 82:10000101010000;  %  jumpOffset  %
-83:00011100110001;  %  @upperToLower addc r3 #1   %
-84:00011111110000;  %  addc r15 #0   %
+83:00011111110000;  %  @upperToLower addc r15 #0   %
+84:00011100110001;  %  addc r3 #1   %
 85:00000000110101;  %  ld r3 r5 m[upper_array]   %
 86:10000100000000;  %  jumpOffset  %
 87:00111001011001;  %  vadd r5 r9   %
@@ -102,7 +102,7 @@ CONTENT BEGIN
 94:00011010011001;  %  sub r9 r9   %
 95:00011110011100;  %  addc r9 #12   %
 96:01010110010010;  %  rotl r9 #2   %
-97:01001000110011;  %  xor r3 r3   %
+97:00011000110011;  %  sub r3 r3   %
 98:00011111110001;  %  addc r15 #1   %
 99:01111011110000;  %  out r15 r0   %
 100:00000000110101;  %  ld r3 r5 m[decimal_array]   %
@@ -110,8 +110,8 @@ CONTENT BEGIN
 102:00111101011001;  %  vsub r5 r9   %
 103:00000100110101;  %  st r3 r5 m[converted_decimal]   %
 104:10001001010000;  %  jumpOffset  %
-105:00011100110001;  %  @convDecimal addc r3 #1   %
-106:00011111110000;  %  addc r15 #0   %
+105:00011111110000;  %  @convDecimal addc r15 #0   %
+106:00011100110001;  %  addc r3 #1   %
 107:00000000110101;  %  ld r3 r5 m[decimal_array]   %
 108:10001000000000;  %  jumpOffset  %
 109:00111101011001;  %  vsub r5 r9   %

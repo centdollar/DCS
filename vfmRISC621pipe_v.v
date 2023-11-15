@@ -166,6 +166,7 @@ vfm_ram my_ram (
     .wren       ( WR_DM             ), // input
     .q          ( MM_out     [13:0] )  // output
 );
+assign Cache_done = 1'd1;
 `else
 vfm_cache_4w_v2 MM (
     .Resetn      ( Resetn_pin               ), // input
@@ -184,32 +185,10 @@ vfm_cache_4w_v2 MM (
 // - Last assigned value will be the exit value.
 //------------------------------------------------------------------------------------------------------------------------------------------
 always@(posedge Clock_pin) begin : my_CPU
-
-
-
-
-
-
-
-
-// NOTES:
-// To "Stall" the CPU while we wait for cache we can have a more general if statement in the my_CPU block
-// This could be like a 
-// if (~cache_done) {
-//  set IR1 = IR1 and so forth
-//}
-// else if(REset)
-//else {the pipeline}
-if(~Cache_done) begin
-    Wait_for_cache = 1'b1;
-
-end
-
-
 //----------------------------------------------------------------------------
 // RESET 
 //----------------------------------------------------------------------------
-else if (Resetn_pin == 0) begin    
+if (Resetn_pin == 0) begin    
     // - The reset is active low and clock synchronous.
     // - Initialize registers.
     PC = 14'h0000; // Initialize the PC to point to the location of the FIRST instruction to be executed; location 0000 is arbitrary!
@@ -243,7 +222,7 @@ else if (Resetn_pin == 0) begin
     stall_mc3   =  1'b1;
     WR_DM       =  1'b0;
 end // if (Resetn_pin == 0)
-else begin // Normal Operation
+else if(Cache_done) begin
     Wait_for_cache = 1'b0;
 //----------------------------------------------------------------------------
 // MACHINE CYCLE 3
@@ -411,7 +390,7 @@ else begin // Normal Operation
             VADD_IC, VADDC_IC: begin
 
                 // Add the two parts of the vector independently
-                TALUout[14:8] = TA[13:7] + TB[6:0];
+                TALUout[14:8] = TA[13:7] + TB[13:7];
                 TALUout[7:0] = TA[6:0] + TB[6:0];
 
 
@@ -431,7 +410,7 @@ else begin // Normal Operation
             VSUB_IC, VSUBC_IC: begin
 
                 // Add the two parts of the vector independently
-                TALUout[14:8] = TA[13:7] - TB[6:0];
+                TALUout[14:8] = TA[13:7] - TB[13:7];
                 TALUout[7:0] = TA[6:0] - TB[6:0];
 
 
@@ -628,11 +607,11 @@ else begin // Normal Operation
                 IPDR = Input_Ps;
             end
             OUT_IC: begin
-                if (Ri1 == Ri2) OPDR = TALUH[7:0];
+                if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) OPDR = TALUH[7:0];
                 else OPDR = R[Ri1][7:0];
             end
             CPY_IC: begin
-                if (Rj1 == Rj2) begin
+                if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) begin
                     TB = TALUH; // <-- DF-FU = Data Forwarding from the instruction in MC2
                 end
                 else begin
@@ -640,7 +619,7 @@ else begin // Normal Operation
                 end
             end //CPY_IC
             NOT_IC, SRA_IC, RRC_IC, RRN_IC, RRZ_IC, SHRL_IC, ROTL_IC, RLN_IC, RLZ_IC, ROTR_IC: begin
-                if (Ri1 == Ri2) begin
+                if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) begin
                     TA = TALUH; // <-- DF-FU = Data Forwarding from the instruction in MC2
                 end
                 else begin
@@ -649,7 +628,7 @@ else begin // Normal Operation
                 TB = Rj1;
             end // NOT_IC, SRA_IC, RRC_IC
             ADDC_IC, SUBC_IC: begin
-                if (Ri1 == Ri2) begin
+                if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) begin
                     TA = TALUH; // <-- DF-FU
                 end
                 else begin
@@ -659,7 +638,7 @@ else begin // Normal Operation
             end // ADDC_IC, SUBC_IC
 
             VADDC_IC, VSUBC_IC: begin
-                if (Ri1 == Ri2) begin
+                if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) begin
                     TA = TALUH; // <-- DF-FU
                 end
                 else begin
@@ -703,16 +682,16 @@ else begin // Normal Operation
                 end
 
                 else begin
-                    if (Ri1 == Ri2) begin TA = TALUH; end
+                    if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) begin TA = TALUH; end
                     else begin TA = R[Ri1]; end
                     
-                    if (Rj1 == Rj2) begin TB = TALUH; end
+                    if ((Rj1 == Rj2) && (IR2 != 14'h3fff)) begin TB = TALUH; end
                     else begin TB = R[Rj1]; end
                 end
             end
 
             CMP_IC: begin
-                if (Ri1 == Ri2) begin TA = TALUH; end
+                if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) begin TA = TALUH; end
                 else begin TA = R[Ri1]; end
 
                 TB = Rj1;    
@@ -721,13 +700,13 @@ else begin // Normal Operation
             SWAP_IC, MUL_IC, DIV_IC: begin
                 // DF-FU; Ri2 below is right for every previous instruction that returns a result in Ri2; 
                 // need to modify for a previous SWAP if the value is to be Rj2
-                if (Ri1 == Ri2) begin
+                if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) begin
                     TA = TALUH; 
                 end
                 else begin
                     TA = R[Ri1];
                 end
-                if (Rj1 == Ri2) begin
+                if ((Rj1 == Rj2) && (IR2 != 14'h3fff)) begin
                     TB = TALUH; 
                 end
                 else begin
@@ -754,9 +733,9 @@ else begin // Normal Operation
     // Below: Rj3 = Ri3 because the previous instruction returns a result in Ri2; 
     //        need to modify for a previous SWAP
 
-    if (stall_mc3 == 0) begin
-        IR4 = IR3;
-    end
+    // if (stall_mc3 == 0) begin
+    //     IR4 = IR3;
+    // end
 
 
     if ((stall_mc2 == 0) && 
@@ -825,18 +804,18 @@ else begin // Normal Operation
     // After the JMP_IC instruction reaches MC3 OR (LD_IC or ST_C) reach MC1,
     // start refilling the pipe by removing the stalls. For JMP_IC the stalls are 
     // removed in this order: stall_mc0 --> stall_mc1 --> stall_mc2
-    if ((IR3 == 14'h3fff) || 
-        (IR4[13:8] == LD_IC) || 
-        (IR4[13:8] == ST_IC) || 
-        (IR4[13:8] == CALL_IC) || 
-        (IR4[13:8] == RET_IC)) begin
+    if ((IR3 == 14'h3fff) &&
+        (IR2[13:8] != LD_IC) && 
+        (IR2[13:8] != ST_IC) && 
+        (IR2[13:8] != CALL_IC) && 
+        (IR2[13:8] != RET_IC)) begin
         stall_mc0 = 0; 
 
         // after this also reset the Ri1 Ri2 Ri3 and Rj1 Rj2 Rj3 regs
-        Ri2 = 4'd0;
-        Rj2 = 4'd0;
-        Ri3 = 4'd0;
-        Rj3 = 4'd0;
+        // Ri2 = 4'd0;
+        // Rj2 = 4'd0;
+        // Ri3 = 4'd0;
+        // Rj3 = 4'd0;
     end
 
 //---------------------------------------------------------------------------
@@ -897,5 +876,8 @@ else begin // Normal Operation
     end
 `endif // ifndef DISABLE_PIPELINE
 end // reset
+else if (~Cache_done) begin    
+    Wait_for_cache = 1'b1; // Normal Operation
+end
 end // my_CPU
 endmodule
