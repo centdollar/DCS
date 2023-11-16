@@ -77,8 +77,15 @@ initial begin
 // What is the speedup for your design? 
     // Hint: write a basic program that does "something useful" and mildly complex, run it with pipeline enabled and disabled, compare difference in execution time
     // Does the calculated speedup match the experimental speedup? Why or why not?
+    repeat (10) @(posedge Clock_tb);
 
-    repeat (6000) @(posedge Clock_tb);
+    SW_in_tb = 5'b11111;
+    
+    repeat (10) @(posedge Clock_tb);
+
+    SW_in_tb = 5'b01111;
+
+    repeat (100) @(posedge Clock_tb);
 
     // Run simulation for additional 15 clock cycles for human observation
     repeat (15) @(posedge Clock_tb);

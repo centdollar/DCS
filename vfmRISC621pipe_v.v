@@ -122,10 +122,10 @@ reg  [29:0]    TALUS          ; // temporary alu shift reg for status shifting
 reg unsigned [13:0] SP        ;
 integer        k              ; // Index for looping construct
 
-reg [4:0] Input_Ps;
-reg [4:0] IPDR;
-reg [2:0] IPA;
-reg [7:0] OPDR;
+reg [13:0] Input_Ps;            // 
+reg [3:0]  IPA;                 // Input peripheral Address Dont think this is needed
+reg [13:0] IPDR[15:0];          // 16 14-bit Input peripheral Data registers, addressed by Rj in IN_IC
+reg [13:0] OPDR[15:0];          // 16 14-bit output registers that are addressed by Rj in the in OUT_IC
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 // - In this architecture we are using a combination of structural and behavioral code.
@@ -142,20 +142,12 @@ reg [7:0] OPDR;
 
 not clock_inverter ( Clock_not, Clock_pin ); // Using a language primative so timing analyzer can recognize the derived clock
 
-    // - Instantiating only 1KWord memories to save resources; (2^10)
-    // - I could instantiate up to 64KWords. (2^16)
-    // - Both memories are clock synchronous i.e., the address and input data are evaluated on a positive clock edge 
-    // - Note that we are using inverted clocks
-//
-//dxpRISC521_rom1 my_rom(
-//    .address    ( PC         [ 9:0] ), // input
-//    .clock      ( Clock_not         ), // input
-//    .q          ( PM_out     [15:0] )  // output // {OpCode, Ri, Rj} = PM_out
-//);
-        always @(*)
-		begin
-			Input_Ps = SW_pin;
-		end
+// push button used for allowing input 
+// always @(~SW_pin[4])
+// begin
+//     // assign 
+// 	Input_Ps = {10'd0, SW_pin[3:0]};
+// end
 
 
 `ifdef NOCACHE
@@ -185,6 +177,12 @@ vfm_cache_4w_v2 MM (
 // - Last assigned value will be the exit value.
 //------------------------------------------------------------------------------------------------------------------------------------------
 always@(posedge Clock_pin) begin : my_CPU
+
+if (~SW_pin[4]) begin
+	Input_Ps = {10'd0, SW_pin[3:0]};
+end
+
+
 //----------------------------------------------------------------------------
 // RESET 
 //----------------------------------------------------------------------------
@@ -256,7 +254,7 @@ else if(Cache_done) begin
                 PC = PC + 1'b0;
             end
             OUT_IC: begin
-                Display_pin = OPDR;
+                Display_pin = OPDR[Rj3][7:0];
             end
             CPY_IC: begin
                     R[IR3[7:4]] = TALUL;
@@ -344,7 +342,7 @@ else if(Cache_done) begin
                 WR_DM = 1'b0;
             end
             IN_IC: begin
-                R[Ri2] = IPDR;
+                R[Ri2] = IPDR[Rj2];
             end
             OUT_IC: begin
                 PC = PC + 1'b0;
@@ -604,11 +602,11 @@ else if(Cache_done) begin
                 stall_mc0 = 1;
             end
             IN_IC: begin
-                IPDR = Input_Ps;
+                IPDR[Rj1] = Input_Ps;
             end
             OUT_IC: begin
-                if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) OPDR = TALUH[7:0];
-                else OPDR = R[Ri1][7:0];
+                if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) OPDR[Rj1] = TALUH[7:0];
+                else OPDR[Rj1] = R[Ri1][7:0];
             end
             CPY_IC: begin
                 if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) begin
@@ -746,7 +744,7 @@ else if(Cache_done) begin
         (IR3[13:8] != RET_IC)) begin 
         IR3 = IR2;
         Ri3 = Ri2;
-        Rj3 = Ri3;
+        Rj3 = Rj2;
         stall_mc3 = 0;
     end 
     // Instruction in MC2 is stalled and IR3 is loaded with the "don't care IW"    
