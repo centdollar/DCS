@@ -5,24 +5,55 @@
 // dxpRISC521pipe_v    Harvard    Memory Mapped I/O-Ps - top 16 locations
 // (c) Dorin Patru 2022; Updated by Stefan Maczynski 2023
 //----------------------------------------------------------------------------
-`define SIMULATION              // REMOVE FOR FPGA EMULATION!
+// `define SIMULATION              // REMOVE FOR FPGA EMULATION!
 //`define DISABLE_PIPELINE      // Use for debuging issues with data-forwarding!
-`define NOCACHE              // Uncomment to remove hierachical memory
+// `define NOCACHE              // Uncomment to remove hierachical memory
 module vfmRISC621pipe_v (
 input             Resetn_pin        , // Reset, implemented with push-button on FPGA
 input             Clock_pin         , // Clock, implemented with Oscillator on FPGA
-input      [13:0] Peripheral_input  , // Four switches
 input             Input_write       , // used for activating the tri-state buffer for IN_IC
+
+input [13:0]       In0,     // write signal that triggers on MC3 of OUT_IC if we wrote to output peripheral 1
+input [13:0]       In1,
+input [13:0]       In2,
+input [13:0]       In3,
+input [13:0]       In4,
+input [13:0]       In5,
+input [13:0]       In6,
+input [13:0]       In7,
+input [13:0]       In8,
+input [13:0]       In9,
+input [13:0]       In10,
+input [13:0]       In11,
+input [13:0]       In12,
+input [13:0]       In13,
+input [13:0]       In14,
+input [13:0]       In15,
 
 // These signals are used for inter-core communication using OUT_IC
 // Are used as the tri-state buffer inputs for the input peripherals for other cores
-output reg        Write_output_1,     // write signal that triggers on MC3 of OUT_IC if we wrote to output peripheral 1
-output reg        Write_output_2,
-output reg        Write_output_3,
-output reg [13:0] Output_IO_0       ,     // 8 LEDs
-output reg [13:0] Output_IO_1       ,
-output reg [13:0] Output_IO_2       , 
-output reg [13:0] Output_IO_3
+output reg  [13:0]       Out0,     // write signal that triggers on MC3 of OUT_IC if we wrote to output peripheral 1
+output reg  [13:0]       Out1,
+output reg  [13:0]       Out2,
+output reg  [13:0]       Out3,
+output reg  [13:0]       Out4,
+output reg  [13:0]       Out5,
+output reg  [13:0]       Out6,
+output reg  [13:0]       Out7,
+output reg  [13:0]       Out8,
+output reg  [13:0]       Out9,
+output reg  [13:0]       Out10,
+output reg  [13:0]       Out11,
+output reg  [13:0]       Out12,
+output reg  [13:0]       Out13,
+output reg  [13:0]       Out14,
+output reg  [13:0]       Out15,
+
+output reg Write_output_0,
+output reg Write_output_1,
+output reg Write_output_2,
+output reg Write_output_3
+
 
 
 );
@@ -136,9 +167,10 @@ integer        k              ; // Index for looping construct
 
 reg [13:0] Input_Ps;            // 
 reg [3:0]  IPA;                 // Input peripheral Address Dont think this is needed
-reg [13:0] IPDR[15:0];          // 16 14-bit Input peripheral Data registers, addressed by Rj in IN_IC
+reg [13:0] IPDR;          // 16 14-bit Input peripheral Data registers, addressed by Rj in IN_IC
 
 reg [13:0] OPDR;          // 16 14-bit output registers that are addressed by Rj in the in OUT_IC
+reg New_Input_data;     // goes high when the push-button is pressed, reset to zero after the value from the input is read into a register with IN_IC
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 // - In this architecture we are using a combination of structural and behavioral code.
@@ -171,6 +203,7 @@ vfm_ram my_ram (
     .wren       ( WR_DM             ), // input
     .q          ( MM_out     [13:0] )  // output
 );
+assign Cache_done = 1;
 `else
 vfm_cache_4w_v2 MM (
     .Resetn      ( Resetn_pin               ), // input
@@ -190,36 +223,14 @@ vfm_cache_4w_v2 MM (
 //------------------------------------------------------------------------------------------------------------------------------------------
 always@(posedge Clock_pin) begin : my_CPU
 
-<<<<<<< HEAD
 if (~Input_write) begin
-	Input_Ps = Peripheral_input;
-=======
-
-
-
-
-
-
-
-// NOTES:
-// To "Stall" the CPU while we wait for cache we can have a more general if statement in the my_CPU block
-// This could be like a 
-// if (~cache_done) {
-//  set IR1 = IR1 and so forth
-//}
-// else if(REset)
-//else {the pipeline}
-if(~Cache_done) begin
-    Wait_for_cache = 1'b1;
-
->>>>>>> parent of 9f1ed1c (Changed How CPU halts if cache is not done (fixed how it will synthesis in hardware). Changed VADD and VSUB to be 1 vector minus another and not just a constant on both parts of vector. WILL not data forward in MC1 if MC2 is in stall)
+    New_Input_data = 1'b1;
 end
-
 
 //----------------------------------------------------------------------------
 // RESET 
 //----------------------------------------------------------------------------
-else if (Resetn_pin == 0) begin    
+if (Resetn_pin == 0) begin    
     // - The reset is active low and clock synchronous.
     // - Initialize registers.
     PC = 14'h0000; // Initialize the PC to point to the location of the FIRST instruction to be executed; location 0000 is arbitrary!
@@ -244,13 +255,12 @@ else if (Resetn_pin == 0) begin
     Ri3         = 4'd0;
     Rj3         = 4'd0;
 
-    Output_IO_0   = 14'd0;
-    Output_IO_1   = 14'd0;
-    Output_IO_2   = 14'd0;
-    Output_IO_3   = 14'd0;
-    Write_output_1 = 0;
-    Write_output_2 = 0;
-    Write_output_3 = 0;
+    New_Input_data = 1'b0;
+
+    Write_output_0 = 1'b0;
+    Write_output_1 = 1'b0;
+    Write_output_2 = 1'b0;
+    Write_output_3 = 1'b0;
 
     // Display_pin =  8'd0;
     IR1         = 14'h3fff; // All IRs are initialized to the "don't care OpCode value 0xffff
@@ -262,11 +272,8 @@ else if (Resetn_pin == 0) begin
     stall_mc3   =  1'b1;
     WR_DM       =  1'b0;
 end // if (Resetn_pin == 0)
-else begin // Normal Operation
+else if (Cache_done) begin // Normal Operation
     Wait_for_cache = 1'b0;
-    Write_output_1 = 0;
-    Write_output_2 = 0;
-    Write_output_3 = 0;
 //----------------------------------------------------------------------------
 // MACHINE CYCLE 3
 //----------------------------------------------------------------------------
@@ -296,21 +303,13 @@ else begin // Normal Operation
                 WR_DM = 1'b0;
             end
             IN_IC: begin
-                PC = PC + 1'b0;
+                New_Input_data = 0;
             end
             OUT_IC: begin
-                case(Rj3)
-                    4'b0000: begin Output_IO_0 = OPDR; end
-                    4'b0001: begin Output_IO_1 = OPDR; Write_output_1 = 1; end
-                    4'b0010: begin Output_IO_2 = OPDR; Write_output_2 = 1; end
-                    4'b0011: begin Output_IO_3 = OPDR; Write_output_3 = 1; end
-                    default: begin 
-                        Write_output_1 = 0;
-                        Write_output_2 = 0;
-                        Write_output_3 = 0;
-                    end
-                endcase
-                // Output_IO[Rj3] = OPDR[7:0];
+                Write_output_0 = 1'b0;
+                Write_output_1 = 1'b0;
+                Write_output_2 = 1'b0;
+                Write_output_3 = 1'b0;
             end
             CPY_IC: begin
                     R[IR3[7:4]] = TALUL;
@@ -398,10 +397,21 @@ else begin // Normal Operation
                 WR_DM = 1'b0;
             end
             IN_IC: begin
-                R[Ri2] = IPDR[Rj2];
+                R[Ri2] = IPDR;
             end
             OUT_IC: begin
-                PC = PC + 1'd0;
+                 case(Rj3)
+                    4'd0: begin Out0 = OPDR; Write_output_0 = 1'b1; end
+                    4'd1: begin Out1 = OPDR; Write_output_1 = 1'b1; end
+                    4'd2: begin Out2 = OPDR; Write_output_2 = 1'b1; end
+                    4'd3: begin Out3 = OPDR; Write_output_3 = 1'b1; end
+                    default: begin 
+                        Write_output_0 = 1'b0;
+                        Write_output_1 = 1'b0;
+                        Write_output_2 = 1'b0;
+                        Write_output_3 = 1'b0;
+                    end
+                endcase
             end
             CPY_IC: begin
                 TALUL = TB;
@@ -658,16 +668,35 @@ else begin // Normal Operation
                 stall_mc0 = 1;
             end
             IN_IC: begin
-                IPDR[Rj1] = Input_Ps;
+                if (New_Input_data) begin
+                    R[0] = R[0] + 1'b1;
+                    case(Rj2)
+                        4'd0: begin IPDR = In0; end
+                        4'd1: begin IPDR = In1; end
+                        4'd2: begin IPDR = In2; end
+                        4'd3: begin IPDR = In3; end
+                        4'd4: begin IPDR = In4; end 
+                        4'd5: begin IPDR = In5; end
+                        4'd6: begin IPDR = In6; end
+                        4'd7: begin IPDR = In7; end
+                        4'd8: begin IPDR = In8; end
+                        4'd9: begin IPDR = In9; end
+                        4'd10: begin IPDR = In10; end
+                        4'd11: begin IPDR = In11; end
+                        4'd12: begin IPDR = In12; end
+                        4'd13: begin IPDR = In13; end
+                        4'd14: begin IPDR = In14; end
+                        4'd15: begin IPDR = In15; end
+                        default: begin IPDR = IPDR; end
+                    endcase
+                    // Register 0 will be used to count the number of inputs we have done
+                    // put low the new input data register
+                    New_Input_data = 1'b0;
+                    end
             end
             OUT_IC: begin
-<<<<<<< HEAD
                 if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) OPDR = TALUH[13:0];
                 else OPDR = R[Ri1];
-=======
-                if (Ri1 == Ri2) OPDR = TALUH[7:0];
-                else OPDR = R[Ri1][7:0];
->>>>>>> parent of 9f1ed1c (Changed How CPU halts if cache is not done (fixed how it will synthesis in hardware). Changed VADD and VSUB to be 1 vector minus another and not just a constant on both parts of vector. WILL not data forward in MC1 if MC2 is in stall)
             end
             CPY_IC: begin
                 if (Rj1 == Rj2) begin

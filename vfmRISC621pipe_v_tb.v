@@ -32,15 +32,48 @@ reg [15:0] clock_count;
 vfmRISC621pipe_v dut(
     .Resetn_pin         ( Resetn_tb             ), // Reset, implemented with push-button on FPGA
     .Clock_pin          ( Clock_tb              ), // Clock, implemented with Oscillator on FPGA
-    .Peripheral_input   ( Peripheral_input_tb   ), // Input peripheral data 
     .Input_write        ( SW_in_tb[4]           ), // Write enable for the input peripheral
-    .Output_IO_0        ( Output_IO_0_tb        ),  // 8 LEDs
-    .Output_IO_1        ( Output_IO_1_tb),
-    .Output_IO_2        ( Output_IO_2_tb),
-    .Output_IO_3        ( Output_IO_3_tb),
-    .Write_output_1     (Write_output_1_tb),
-    .Write_output_2     (Write_output_2_tb),
-    .Write_output_3     (Write_output_3_tb)
+    
+    .In0               (Peripheral_input_tb),
+    .In1               (),
+    .In2               (),
+    .In3               (),
+    .In4               (),
+    .In5               (),
+    .In6               (),
+    .In7               (),
+    .In8               (),
+    .In9               (),
+    .In10              (),
+    .In11              (),
+    .In12              (),
+    .In13              (),
+    .In14              (),
+    .In15              (),
+
+    .Out0               (display_out),
+    .Out1               (),
+    .Out2               (),
+    .Out3               (),
+    .Out4               (),
+    .Out5               (),
+    .Out6               (),
+    .Out7               (),
+    .Out8               (),
+    .Out9               (),
+    .Out10              (),
+    .Out11              (),
+    .Out12              (),
+    .Out13              (),
+    .Out14              (),
+    .Out15              (),
+
+    .Write_output_0     (),
+    .Write_output_1     (),
+    .Write_output_2     (),
+    .Write_output_3     ()
+
+
 );
 
 assign Peripheral_input_tb = {11'd0, SW_in_tb};
@@ -101,7 +134,6 @@ initial begin
     // Does the calculated speedup match the experimental speedup? Why or why not?
     repeat (10) @(posedge Clock_tb);
 
-<<<<<<< HEAD
     SW_in_tb = 5'b11111;
     
     repeat (10) @(posedge Clock_tb);
@@ -109,9 +141,18 @@ initial begin
     SW_in_tb = 5'b01111;
 
     repeat (100) @(posedge Clock_tb);
-=======
-    repeat (2770) @(posedge Clock_tb);
->>>>>>> parent of 9f1ed1c (Changed How CPU halts if cache is not done (fixed how it will synthesis in hardware). Changed VADD and VSUB to be 1 vector minus another and not just a constant on both parts of vector. WILL not data forward in MC1 if MC2 is in stall)
+
+    SW_in_tb = 5'b11010;
+
+    repeat (100) @(posedge Clock_tb);
+
+    SW_in_tb = 5'b11110;
+
+    repeat (100) @(posedge Clock_tb);
+
+    SW_in_tb = 5'b11011;
+
+    repeat (100) @(posedge Clock_tb);
 
     // Run simulation for additional 15 clock cycles for human observation
     repeat (15) @(posedge Clock_tb);
