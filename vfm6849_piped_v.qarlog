@@ -1,38 +1,29 @@
-Quartus Prime Archive log --	C:/Users/Vincent/Documents/repos/DCS/vfm6849_piped_v.qarlog
+Quartus Prime Archive log --	C:/Users/vinmi/Documents/GitHub/DCS/vfm6849_piped_v.qarlog
 
-Archive:	C:/Users/Vincent/Documents/repos/DCS/vfm6849_piped_v.qar
-Date:		Tue Nov 28 14:03:03 2023
+Archive:	C:/Users/vinmi/Documents/GitHub/DCS/vfm6849_piped_v.qar
+Date:		Wed Nov 29 02:24:41 2023
 Quartus Prime		18.1.0 Build 625 09/12/2018 SJ Lite Edition
 
 	=========== Files Selected: ===========
-C:/Users/Vincent/Documents/repos/DCS/assignment_defaults.qdf
-C:/Users/Vincent/Documents/repos/DCS/dcs_lab11_part1.mif
-C:/Users/Vincent/Documents/repos/DCS/vfm6849_piped_v.qpf
-C:/Users/Vincent/Documents/repos/DCS/vfm6849_piped_v.qsf
-C:/Users/Vincent/Documents/repos/DCS/vfm6849_top.bdf
-C:/Users/Vincent/Documents/repos/DCS/vfmRISC621_ram1.qip
-C:/Users/Vincent/Documents/repos/DCS/vfmRISC621_ram1.v
-C:/Users/Vincent/Documents/repos/DCS/vfmRISC621_ram1_bb.v
-C:/Users/Vincent/Documents/repos/DCS/vfmRISC621pipe_v.v
-C:/Users/Vincent/Documents/repos/DCS/vfmRISC621pipe_v_tb.v
-C:/Users/Vincent/Documents/repos/DCS/vfm_CAM_v2.v
-C:/Users/Vincent/Documents/repos/DCS/vfm_CPU_emu.sdc
-C:/Users/Vincent/Documents/repos/DCS/vfm_cache_4w_v2.v
-C:/Users/Vincent/Documents/repos/DCS/vfm_cache_4w_v_tb.v
-C:/Users/Vincent/Documents/repos/DCS/vfm_cache_v.qip
-C:/Users/Vincent/Documents/repos/DCS/vfm_cache_v.v
-C:/Users/Vincent/Documents/repos/DCS/vfm_cache_v_bb.v
-C:/Users/Vincent/Documents/repos/DCS/vfm_ir2assembly_v.v
-C:/Users/Vincent/Documents/repos/DCS/vfm_pll.ppf
-C:/Users/Vincent/Documents/repos/DCS/vfm_pll.qip
-C:/Users/Vincent/Documents/repos/DCS/vfm_pll.v
-C:/Users/Vincent/Documents/repos/DCS/vfm_pll_bb.v
-C:/Users/Vincent/Documents/repos/DCS/vfm_proc_inst_v.sdc
-C:/Users/Vincent/Documents/repos/DCS/vfm_proc_inst_v.v
-C:/Users/Vincent/Documents/repos/DCS/vfm_ram.qip
-C:/Users/Vincent/Documents/repos/DCS/vfm_ram.v
-C:/Users/Vincent/Documents/repos/DCS/vfm_ram_bb.v
-	======= Total: 27 files to archive =======
+C:/Users/vinmi/Documents/GitHub/DCS/dcs_lab11_part2.mif
+C:/Users/vinmi/Documents/GitHub/DCS/vfm6849_piped_v.qpf
+C:/Users/vinmi/Documents/GitHub/DCS/vfm6849_piped_v.qsf
+C:/Users/vinmi/Documents/GitHub/DCS/vfm6849_piped_v.sdc
+C:/Users/vinmi/Documents/GitHub/DCS/vfm6849_top.bdf
+C:/Users/vinmi/Documents/GitHub/DCS/vfmRISC621_ram1.v
+C:/Users/vinmi/Documents/GitHub/DCS/vfmRISC621pipe_v.v
+C:/Users/vinmi/Documents/GitHub/DCS/vfmRISC621pipe_v_tb.v
+C:/Users/vinmi/Documents/GitHub/DCS/vfm_CAM_v2.v
+C:/Users/vinmi/Documents/GitHub/DCS/vfm_cache_4w_v2.v
+C:/Users/vinmi/Documents/GitHub/DCS/vfm_cache_4w_v_tb.v
+C:/Users/vinmi/Documents/GitHub/DCS/vfm_cache_v.v
+C:/Users/vinmi/Documents/GitHub/DCS/vfm_ir2assembly_v.v
+C:/Users/vinmi/Documents/GitHub/DCS/vfm_pll.v
+C:/Users/vinmi/Documents/GitHub/DCS/vfm_proc_inst_v.v
+C:/Users/vinmi/Documents/GitHub/DCS/vfm_proc_inst_v2.v
+C:/Users/vinmi/Documents/GitHub/DCS/vfm_ram.v
+c:/intelfpga_lite/18.1/quartus/bin64/assignment_defaults.qdf
+	======= Total: 18 files to archive =======
 
 	================ Status: ===============
 All files archived successfully.

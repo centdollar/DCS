@@ -1,0 +1,3 @@
+Info (10281): Verilog HDL Declaration information at vfm_proc_inst_v.v(3): object "resetn" differs only in case from object "Resetn" in the same scope File: C:/Users/vinmi/Documents/GitHub/DCS/vfm_proc_inst_v.v Line: 3
+Info (10281): Verilog HDL Declaration information at vfm_cache_4w_v2.v(46): object "WRITEBACK" differs only in case from object "writeback" in the same scope File: C:/Users/vinmi/Documents/GitHub/DCS/vfm_cache_4w_v2.v Line: 46
+Info (10281): Verilog HDL Declaration information at vfm_cache_4w_v2.v(45): object "FETCH" differs only in case from object "fetch" in the same scope File: C:/Users/vinmi/Documents/GitHub/DCS/vfm_cache_4w_v2.v Line: 45

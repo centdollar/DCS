@@ -76,6 +76,7 @@ always @ (*) begin
 			6'b100000 : ICis = {"VADDC ", IR7to4, " ", IR3to0, " "};
 			6'b100001 : ICis = {"VSUBC ", IR7to4, " ", IR3to0, " "};
 			6'b110000 : ICis = {"CMP ", IR7to4, " ", IR3to0, " "};
+			6'b111000 : ICis = {"NOP ", IR7to4, " ", IR3to0, " "};
 
 	default : ICis = {8'h4E, 8'h44, 8'h45, 8'h46}; //NDEF
    endcase

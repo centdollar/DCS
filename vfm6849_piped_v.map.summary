@@ -1,0 +1,14 @@
+Analysis & Synthesis Status : Successful - Wed Nov 29 02:17:41 2023
+Quartus Prime Version : 18.1.0 Build 625 09/12/2018 SJ Lite Edition
+Revision Name : vfm6849_piped_v
+Top-level Entity Name : vfm_proc_inst_v
+Family : Cyclone IV E
+Total logic elements : 4,698
+    Total combinational functions : 4,541
+    Dedicated logic registers : 692
+Total registers : 692
+Total pins : 15
+Total virtual pins : 0
+Total memory bits : 231,168
+Embedded Multiplier 9-bit elements : 2
+Total PLLs : 1

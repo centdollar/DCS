@@ -27,12 +27,15 @@ wire Write_output_3_tb;
 // wire [13:0] IO_OUTPUT [15:0];
 wire [13:0] Peripheral_input_tb;
 reg [15:0] clock_count;
+wire [13:0] display_out;
+
+assign Display_out_tb = display_out[7:0];
 
 // Design under test instantiation
 vfmRISC621pipe_v dut(
     .Resetn_pin         ( Resetn_tb             ), // Reset, implemented with push-button on FPGA
     .Clock_pin          ( Clock_tb              ), // Clock, implemented with Oscillator on FPGA
-    .Input_write        ( SW_in_tb[4]           ), // Write enable for the input peripheral
+    .Input_write        ( ~SW_in_tb[4]           ), // Write enable for the input peripheral
     
     .In0               (Peripheral_input_tb),
     .In1               (),
@@ -77,7 +80,6 @@ vfmRISC621pipe_v dut(
 );
 
 assign Peripheral_input_tb = {11'd0, SW_in_tb};
-assign Display_out_tb = Output_IO_0_tb[7:0];
 
 // Instruction to Ascii Translators, note use of hierarchical/virtual routing
 vfm_ir2assembly_v instruction_translate_1(
@@ -142,17 +144,24 @@ initial begin
 
     repeat (100) @(posedge Clock_tb);
 
+    SW_in_tb = 5'b01010;
+
+    repeat (100) @(posedge Clock_tb);
     SW_in_tb = 5'b11010;
+
+    SW_in_tb = 5'b00000;
 
     repeat (100) @(posedge Clock_tb);
 
     SW_in_tb = 5'b11110;
 
+    SW_in_tb = 5'b00000;
+
     repeat (100) @(posedge Clock_tb);
 
     SW_in_tb = 5'b11011;
 
-    repeat (100) @(posedge Clock_tb);
+    repeat (10000) @(posedge Clock_tb);
 
     // Run simulation for additional 15 clock cycles for human observation
     repeat (15) @(posedge Clock_tb);

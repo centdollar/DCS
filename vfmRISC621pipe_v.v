@@ -6,7 +6,7 @@
 // (c) Dorin Patru 2022; Updated by Stefan Maczynski 2023
 //----------------------------------------------------------------------------
 // `define SIMULATION              // REMOVE FOR FPGA EMULATION!
-//`define DISABLE_PIPELINE      // Use for debuging issues with data-forwarding!
+`define DISABLE_PIPELINE      // Use for debuging issues with data-forwarding!
 // `define NOCACHE              // Uncomment to remove hierachical memory
 module vfmRISC621pipe_v (
 input             Resetn_pin        , // Reset, implemented with push-button on FPGA
@@ -124,6 +124,7 @@ localparam [5:0]  OUT_IC  = 6'b011110;
 
 // Compare instruction for loops
 localparam [5:0]  CMP_IC  = 6'b110000;
+localparam [5:0]  NOP_IC  = 6'b111000;
 
 
 //----------------------------------------------------------------------------
@@ -223,9 +224,6 @@ vfm_cache_4w_v2 MM (
 //------------------------------------------------------------------------------------------------------------------------------------------
 always@(posedge Clock_pin) begin : my_CPU
 
-if (~Input_write) begin
-    New_Input_data = 1'b1;
-end
 
 //----------------------------------------------------------------------------
 // RESET 
@@ -254,6 +252,7 @@ if (Resetn_pin == 0) begin
     Rj2         = 4'd0;
     Ri3         = 4'd0;
     Rj3         = 4'd0;
+    IPDR        = 14'd0;
 
     New_Input_data = 1'b0;
 
@@ -346,6 +345,9 @@ else if (Cache_done) begin // Normal Operation
                 R[IR3[3:0]] = TALUL;
                 SR = TSR;
             end
+            NOP_IC: begin
+                PC = PC + 1'b0;
+            end
             default: begin // Default case should not be reached0
                 `ifdef SIMULATION
                 $display("ERROR: Default Case Selection Reached from MC3 , OPCODE: %b @ %t",IR3[13:8], $time());
@@ -400,7 +402,7 @@ else if (Cache_done) begin // Normal Operation
                 R[Ri2] = IPDR;
             end
             OUT_IC: begin
-                 case(Rj3)
+                 case(Rj2)
                     4'd0: begin Out0 = OPDR; Write_output_0 = 1'b1; end
                     4'd1: begin Out1 = OPDR; Write_output_1 = 1'b1; end
                     4'd2: begin Out2 = OPDR; Write_output_2 = 1'b1; end
@@ -606,7 +608,7 @@ else if (Cache_done) begin // Normal Operation
                 begin
                     TALUS = {TSR[10], TA, TSR[10], TA} >> TB;
                     TALUH = TALUS[13:0];
-                    TSR[10] = TALUH[13]; // Negative
+                    TSR[10] = TALUS[14]; // Negative
                     if (TALUH[13:0] == 14'h0000) TSR[8] = 1; else TSR[8] = 0; // Zero\
                 end //RRN_IC
             RRZ_IC:
@@ -614,8 +616,12 @@ else if (Cache_done) begin // Normal Operation
                     TALUS = {TSR[8], TA, TSR[8], TA} >> TB;
                     TALUH = TALUS[13:0];
                     TSR[10] = TALUH[13]; // Negative
-                    if (TALUH[13:0] == 14'h0000) TSR[8] = 1; else TSR[8] = 0; // Zero\
+                    TSR[8] = TALUS[14];
+                    // if (TALUH[13:0] == 14'h0000) TSR[8] = 1; else TSR[8] = 0; // Zero\
                 end //RRZ_IC
+            NOP_IC: begin
+                PC = PC + 1'b0;
+            end
             default: begin // Default case should not be reached
                 `ifdef SIMULATION
                 $display("ERROR: Default Case Selection Reached from MC2 , OPCODE: %b @ %t",IR2[13:8], $time());
@@ -668,31 +674,25 @@ else if (Cache_done) begin // Normal Operation
                 stall_mc0 = 1;
             end
             IN_IC: begin
-                if (New_Input_data) begin
-                    R[0] = R[0] + 1'b1;
-                    case(Rj2)
-                        4'd0: begin IPDR = In0; end
-                        4'd1: begin IPDR = In1; end
-                        4'd2: begin IPDR = In2; end
-                        4'd3: begin IPDR = In3; end
-                        4'd4: begin IPDR = In4; end 
-                        4'd5: begin IPDR = In5; end
-                        4'd6: begin IPDR = In6; end
-                        4'd7: begin IPDR = In7; end
-                        4'd8: begin IPDR = In8; end
-                        4'd9: begin IPDR = In9; end
-                        4'd10: begin IPDR = In10; end
-                        4'd11: begin IPDR = In11; end
-                        4'd12: begin IPDR = In12; end
-                        4'd13: begin IPDR = In13; end
-                        4'd14: begin IPDR = In14; end
-                        4'd15: begin IPDR = In15; end
-                        default: begin IPDR = IPDR; end
-                    endcase
-                    // Register 0 will be used to count the number of inputs we have done
-                    // put low the new input data register
-                    New_Input_data = 1'b0;
-                    end
+                case(Rj1)
+                    4'd0: begin IPDR = {In0[13:1], Input_write}; end
+                    4'd1: begin IPDR = In1; end
+                    4'd2: begin IPDR = In2; end
+                    4'd3: begin IPDR = In3; end
+                    4'd4: begin IPDR = In4; end 
+                    4'd5: begin IPDR = In5; end
+                    4'd6: begin IPDR = In6; end
+                    4'd7: begin IPDR = In7; end
+                    4'd8: begin IPDR = In8; end
+                    4'd9: begin IPDR = In9; end
+                    4'd10: begin IPDR = In10; end
+                    4'd11: begin IPDR = In11; end
+                    4'd12: begin IPDR = In12; end
+                    4'd13: begin IPDR = In13; end
+                    4'd14: begin IPDR = In14; end
+                    4'd15: begin IPDR = In15; end
+                    default: begin IPDR = IPDR; end
+                endcase
             end
             OUT_IC: begin
                 if ((Ri1 == Ri2) && (IR2 != 14'h3fff)) OPDR = TALUH[13:0];
@@ -802,6 +802,11 @@ else if (Cache_done) begin // Normal Operation
                 end
              
             end // SWAP_IC, ADD_IC, SUB_IC, AND_IC, OR_IC, XOR_IC, MUL_IC, DIV_IC,
+
+            NOP_IC: begin
+                PC = PC + 1'b0;
+            end
+
             default: begin // Default case should not be reached
                 `ifdef SIMULATION
                 $display("ERROR: Default Case Selection Reached from MC1 , OPCODE: %b @ %t",IR1[13:8], $time());

@@ -1,0 +1,16 @@
+Fitter Status : Successful - Wed Nov 29 02:17:54 2023
+Quartus Prime Version : 18.1.0 Build 625 09/12/2018 SJ Lite Edition
+Revision Name : vfm6849_piped_v
+Top-level Entity Name : vfm_proc_inst_v
+Family : Cyclone IV E
+Device : EP4CE22F17C6
+Timing Models : Final
+Total logic elements : 4,576 / 22,320 ( 21 % )
+    Total combinational functions : 4,541 / 22,320 ( 20 % )
+    Dedicated logic registers : 692 / 22,320 ( 3 % )
+Total registers : 692
+Total pins : 15 / 154 ( 10 % )
+Total virtual pins : 0
+Total memory bits : 231,168 / 608,256 ( 38 % )
+Embedded Multiplier 9-bit elements : 2 / 132 ( 2 % )
+Total PLLs : 1 / 4 ( 25 % )

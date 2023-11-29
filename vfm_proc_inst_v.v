@@ -12,21 +12,22 @@ wire Resetn;
 wire [13:0] Peripheral_input;
 
 assign LEDS = display_out[7:0];
-assign Peripheral_input = {10'd0, SW_in[3:0]};
+assign Peripheral_input = {9'd0, SW_in[3:0], SW_in[4]};
+assign Resetn = resetn;
 
-vfm_pll pll(
+vfm_pll my_pll(
     .inclk0(clock_in),
     .c0(pll_outClk),
     .locked(pll_locked)
 );
 
-or(Resetn, ~pll_locked, resetn);
+//or(Resetn, ~pll_locked, resetn);
 
 // Core 0 instantiation
 vfmRISC621pipe_v core0(
     .Resetn_pin         ( Resetn             ), // Reset, implemented with push-button on FPGA
     .Clock_pin          ( pll_outClk              ), // Clock, implemented with Oscillator on FPGA
-    .Input_write        ( SW_in[4]           ), // Write enable for the input peripheral
+    .Input_write        ( ~SW_in[4]           ), // Write enable for the input peripheral
     
     .In0               (Peripheral_input),
     .In1               (),
