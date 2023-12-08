@@ -4,7 +4,7 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EP4CE22F17) Path("C:/Users/vinmi/Documents/GitHub/DCS/") File("vfm6849_piped_v.sof") MfrSpec(OpMask(1));
+		Device PartName(EP4CE22F17) Path("C:/Users/Vincent/Documents/repos/DCS/") File("vfm6849_piped_v.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 

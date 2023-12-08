@@ -6,8 +6,9 @@
 // (c) Dorin Patru 2022; Updated by Stefan Maczynski 2023
 //----------------------------------------------------------------------------
 // `define SIMULATION              // REMOVE FOR FPGA EMULATION!
-`define DISABLE_PIPELINE      // Use for debuging issues with data-forwarding!
+// `define DISABLE_PIPELINE      // Use for debuging issues with data-forwarding!
 // `define NOCACHE              // Uncomment to remove hierachical memory
+`include "TestBenchControl.vh"
 module vfmRISC621pipe_v (
 input             Resetn_pin        , // Reset, implemented with push-button on FPGA
 input             Clock_pin         , // Clock, implemented with Oscillator on FPGA
@@ -47,12 +48,7 @@ output reg  [13:0]       Out11,
 output reg  [13:0]       Out12,
 output reg  [13:0]       Out13,
 output reg  [13:0]       Out14,
-output reg  [13:0]       Out15,
-
-output reg Write_output_0,
-output reg Write_output_1,
-output reg Write_output_2,
-output reg Write_output_3
+output reg  [13:0]       Out15
 
 
 
@@ -160,7 +156,6 @@ reg  [11:0]    TSR            ; // Temporary Status Register
 reg  [11:0]    SR             ; // Status Register
 wire           Clock_not      ; // Inverted Clock
 wire           Cache_done     ;
-reg            Wait_for_cache;
 wire [13:0]    MM_out         ; // Output of monolithic memory 
 reg  [29:0]    TALUS          ; // temporary alu shift reg for status shifting
 reg unsigned [13:0] SP        ;
@@ -171,7 +166,6 @@ reg [3:0]  IPA;                 // Input peripheral Address Dont think this is n
 reg [13:0] IPDR;          // 16 14-bit Input peripheral Data registers, addressed by Rj in IN_IC
 
 reg [13:0] OPDR;          // 16 14-bit output registers that are addressed by Rj in the in OUT_IC
-reg New_Input_data;     // goes high when the push-button is pressed, reset to zero after the value from the input is read into a register with IN_IC
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 // - In this architecture we are using a combination of structural and behavioral code.
@@ -197,11 +191,11 @@ not clock_inverter ( Clock_not, Clock_pin ); // Using a language primative so ti
 
 
 `ifdef NOCACHE
-vfm_ram my_ram (
+vfmRISC621_ram1 MM (
     .address    ( MAeff      [ 13:0]), // input
     .clock      ( Clock_not         ), // input
     .data       ( MM_in      [13:0] ), // input
-    .wren       ( WR_DM             ), // input
+    .wren       ( WR_DM             ), // inputs
     .q          ( MM_out     [13:0] )  // output
 );
 assign Cache_done = 1;
@@ -232,7 +226,6 @@ if (Resetn_pin == 0) begin
     // - The reset is active low and clock synchronous.
     // - Initialize registers.
     PC = 14'h0000; // Initialize the PC to point to the location of the FIRST instruction to be executed; location 0000 is arbitrary!
-    Wait_for_cache = 1'b0;
     for (k = 0; k < 16; k = k+1) begin R[k] = 0; end
     MAB         = 14'd0;
     MAX         = 14'd0;
@@ -254,12 +247,24 @@ if (Resetn_pin == 0) begin
     Rj3         = 4'd0;
     IPDR        = 14'd0;
 
-    New_Input_data = 1'b0;
+    Out0        = 14'd0;
+    Out1        = 14'd0;
+    Out2        = 14'd0;
+    Out3        = 14'd0;
+    Out4        = 14'd0;
+    Out5        = 14'd0;
+    Out6        = 14'd0;
+    Out7        = 14'd0;
+    Out8        = 14'd0;
+    Out9        = 14'd0;
+    Out10        = 14'd0;
+    Out11        = 14'd0;
+    Out12        = 14'd0;
+    Out13        = 14'd0;
+    Out14        = 14'd0;
+    Out15        = 14'd0;
 
-    Write_output_0 = 1'b0;
-    Write_output_1 = 1'b0;
-    Write_output_2 = 1'b0;
-    Write_output_3 = 1'b0;
+
 
     // Display_pin =  8'd0;
     IR1         = 14'h3fff; // All IRs are initialized to the "don't care OpCode value 0xffff
@@ -272,7 +277,6 @@ if (Resetn_pin == 0) begin
     WR_DM       =  1'b0;
 end // if (Resetn_pin == 0)
 else if (Cache_done) begin // Normal Operation
-    Wait_for_cache = 1'b0;
 //----------------------------------------------------------------------------
 // MACHINE CYCLE 3
 //----------------------------------------------------------------------------
@@ -302,13 +306,10 @@ else if (Cache_done) begin // Normal Operation
                 WR_DM = 1'b0;
             end
             IN_IC: begin
-                New_Input_data = 0;
+                PC = PC + 1'b0;
             end
             OUT_IC: begin
-                Write_output_0 = 1'b0;
-                Write_output_1 = 1'b0;
-                Write_output_2 = 1'b0;
-                Write_output_3 = 1'b0;
+                PC = PC + 1'b0;
             end
             CPY_IC: begin
                     R[IR3[7:4]] = TALUL;
@@ -403,15 +404,24 @@ else if (Cache_done) begin // Normal Operation
             end
             OUT_IC: begin
                  case(Rj2)
-                    4'd0: begin Out0 = OPDR; Write_output_0 = 1'b1; end
-                    4'd1: begin Out1 = OPDR; Write_output_1 = 1'b1; end
-                    4'd2: begin Out2 = OPDR; Write_output_2 = 1'b1; end
-                    4'd3: begin Out3 = OPDR; Write_output_3 = 1'b1; end
+                    4'd0: begin Out0 = OPDR; end
+                    4'd1: begin Out1 = OPDR; end
+                    4'd2: begin Out2 = OPDR; end
+                    4'd3: begin Out3 = OPDR; end
+                    4'd4: begin Out4 = OPDR; end
+                    4'd5: begin Out5 = OPDR; end
+                    4'd6: begin Out6 = OPDR; end
+                    4'd7: begin Out7 = OPDR; end
+                    4'd8: begin Out8 = OPDR; end
+                    4'd9: begin Out9 = OPDR; end
+                    4'd10: begin Out10 = OPDR; end
+                    4'd11: begin Out11 = OPDR; end
+                    4'd12: begin Out12 = OPDR; end
+                    4'd13: begin Out13 = OPDR; end
+                    4'd14: begin Out14 = OPDR; end
+                    4'd15: begin Out15 = OPDR; end
                     default: begin 
-                        Write_output_0 = 1'b0;
-                        Write_output_1 = 1'b0;
-                        Write_output_2 = 1'b0;
-                        Write_output_3 = 1'b0;
+                        
                     end
                 endcase
             end
@@ -675,7 +685,7 @@ else if (Cache_done) begin // Normal Operation
             end
             IN_IC: begin
                 case(Rj1)
-                    4'd0: begin IPDR = {In0[13:1], Input_write}; end
+                    4'd0: begin IPDR = In0; end
                     4'd1: begin IPDR = In1; end
                     4'd2: begin IPDR = In2; end
                     4'd3: begin IPDR = In3; end
@@ -716,7 +726,7 @@ else if (Cache_done) begin // Normal Operation
                 TB = Rj1;
             end // NOT_IC, SRA_IC, RRC_IC
             ADDC_IC, SUBC_IC: begin
-                if (Ri1 == Ri2) begin
+                if ((Ri1 == Ri2) && (IR2 != 14'h3FFF) && (IR2[13:8] != NOP_IC)) begin
                     TA = TALUH; // <-- DF-FU
                 end
                 else begin
@@ -770,10 +780,10 @@ else if (Cache_done) begin // Normal Operation
                 end
 
                 else begin
-                    if (Ri1 == Ri2) begin TA = TALUH; end
+                    if ((Ri1 == Ri2) && (IR2[13:8] != NOP_IC)) begin TA = TALUH; end
                     else begin TA = R[Ri1]; end
                     
-                    if (Rj1 == Rj2) begin TB = TALUH; end
+                    if ((Rj1 == Rj2)  && (IR2[13:8] != NOP_IC)) begin TB = TALUH; end
                     else begin TB = R[Rj1]; end
                 end
             end
@@ -935,11 +945,12 @@ else if (Cache_done) begin // Normal Operation
     // Alternative Operation Mode, Disables Pipeline
     // For Debug and Benchmarking Purposes Only! -> This can help you find data-forwarding issues
     if (stall_mc0 == 0) begin
-		  MAeff = PC;
+		  
         IR1 = MM_out;
         Ri1 = MM_out[7:4];
         Rj1 = MM_out[3:0];
         PC = PC + 1'b1;
+        MAeff = PC;
         stall_mc1 = 0;
         stall_mc0 = 1;
         IR2 = 14'h3fff;
