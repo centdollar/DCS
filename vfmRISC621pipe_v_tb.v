@@ -279,11 +279,13 @@ if ((dut.core0.PC >= 70) && (dut.core0.PC <= 169)) begin clock_count = clock_cou
 
 `ifdef MULTICORE2
 // if ((dut.core0.PC >= 70) && (dut.core0.PC <= 189)) begin clock_count = clock_count + 1'b1; end
-if ((dut.core0.PC >= 70) && (dut.core0.PC <= 211)) begin clock_count = clock_count + 1'b1; end
+if ((dut.core0.PC >= 70) && (dut.core0.PC <= 170)) begin clock_count = clock_count + 1'b1; end
+// if ((dut.core0.PC >= 70) && (dut.core0.PC <= 211)) begin clock_count = clock_count + 1'b1; end
 `endif
 
 `ifdef MULTICORE4
-if ((dut.core0.PC >= 70) && (dut.core0.PC <= 282)) begin clock_count = clock_count + 1'b1; end
+if ((dut.core0.PC >= 70) && (dut.core0.PC <= 155)) begin clock_count = clock_count + 1'b1; end
+// if ((dut.core0.PC >= 70) && (dut.core0.PC <= 282)) begin clock_count = clock_count + 1'b1; end
 `endif
 // `ifdef (MULTICORE2 || MULTICORE4)
 // clock_count = clock_count + 1'b1;
@@ -325,22 +327,22 @@ initial begin
 // What is the speedup for your design? 
     // Hint: write a basic program that does "something useful" and mildly complex, run it with pipeline enabled and disabled, compare difference in execution time
     // Does the calculated speedup match the experimental speedup? Why or why not?
-    // repeat (10) @(posedge Clock_tb);
+    repeat (10) @(posedge Clock_tb);
 
-    // SW_in_tb = 5'b11111;
+    SW_in_tb = 5'b11111;
     
-    // repeat (20) @(posedge Clock_tb);
+    repeat (20) @(posedge Clock_tb);
 
-    // SW_in_tb = 5'b01111;
+    SW_in_tb = 5'b01111;
 
-    // repeat (20) @(posedge Clock_tb);
+    repeat (20) @(posedge Clock_tb);
 
-    // SW_in_tb = 5'b11111;
+    SW_in_tb = 5'b11111;
 
     // wait(Display_out_tb == 8'b00001111);
     repeat(80) @(posedge Clock_tb);
     // KNOWN ISSUE: THE BOUNDS NEED TO START AT 1 FOR NO PIPE SINGLE CORE
-    for (i = 0; i < 16; i=i+1) begin
+    for (i = 1; i < 17; i=i+1) begin
         switches(i[3:0]);
         wait(Display_out_tb == {4'd0, i[3:0]});
     end
