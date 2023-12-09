@@ -1,5 +1,5 @@
 `define SIMULATION
-`define NOCACHE
+// `define NOCACHE
 // `define DISABLE_PIPELINE
 
 

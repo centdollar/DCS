@@ -12,7 +12,6 @@
 module vfmRISC621pipe_v (
 input             Resetn_pin        , // Reset, implemented with push-button on FPGA
 input             Clock_pin         , // Clock, implemented with Oscillator on FPGA
-input             Input_write       , // used for activating the tri-state buffer for IN_IC
 
 input [13:0]       In0,     // write signal that triggers on MC3 of OUT_IC if we wrote to output peripheral 1
 input [13:0]       In1,
@@ -161,8 +160,6 @@ reg  [29:0]    TALUS          ; // temporary alu shift reg for status shifting
 reg unsigned [13:0] SP        ;
 integer        k              ; // Index for looping construct
 
-reg [13:0] Input_Ps;            // 
-reg [3:0]  IPA;                 // Input peripheral Address Dont think this is needed
 reg [13:0] IPDR;          // 16 14-bit Input peripheral Data registers, addressed by Rj in IN_IC
 
 reg [13:0] OPDR;          // 16 14-bit output registers that are addressed by Rj in the in OUT_IC

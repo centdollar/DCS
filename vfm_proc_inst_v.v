@@ -37,9 +37,9 @@ assign Resetn = resetn;
 // Do not use PLL in simulation because it takes forever
 `ifdef SIMULATION
 assign pll_outClk = clock_in;
-assign pll_locked = 1'b1;
 `else
 wire pll_locked;
+assign pll_locked = 1'b1;
 vfm_pll my_pll(
     .inclk0(clock_in),
     .c0(pll_outClk),
@@ -65,7 +65,6 @@ defparam core0.MM.main_mem.altsyncram_component.init_file = "test1.mif";
 vfmRISC621pipe_v core0(
     .Resetn_pin         ( Resetn             ), // Reset, implemented with push-button on FPGA
     .Clock_pin          ( pll_outClk              ), // Clock, implemented with Oscillator on FPGA
-    .Input_write        ( SW_in[4]           ), // Write enable for the input peripheral
     
     .In0               (Peripheral_input),
     .In1               (),
@@ -128,7 +127,6 @@ defparam core1.MM.main_mem.altsyncram_component.init_file = "core1.mif";
 vfmRISC621pipe_v core0(
     .Resetn_pin         ( Resetn             ), // Reset, implemented with push-button on FPGA
     .Clock_pin          ( pll_outClk              ), // Clock, implemented with Oscillator on FPGA
-    .Input_write        ( SW_in[4]           ), // Write enable for the input peripheral
     
     .In0               (Peripheral_input),
     .In1               (core1to0_ack),
@@ -173,7 +171,6 @@ vfmRISC621pipe_v core0(
 vfmRISC621pipe_v core1(
     .Resetn_pin         ( Resetn             ), // Reset, implemented with push-button on FPGA
     .Clock_pin          ( pll_outClk              ), // Clock, implemented with Oscillator on FPGA
-    .Input_write        ( ~SW_in[4]           ), // Write enable for the input peripheral
     
     .In0               (Peripheral_input),
     .In1               (core0to1_ack),
@@ -250,7 +247,6 @@ defparam core3.MM.main_mem.altsyncram_component.init_file = "dcs_lab12_core3.mif
 vfmRISC621pipe_v core0(
     .Resetn_pin         ( Resetn             ), // Reset, implemented with push-button on FPGA
     .Clock_pin          ( pll_outClk              ), // Clock, implemented with Oscillator on FPGA
-    .Input_write        ( SW_in[4]           ), // Write enable for the input peripheral
     
     .In0               (Peripheral_input),
     .In1               (core1to0_ack),
@@ -293,7 +289,6 @@ vfmRISC621pipe_v core0(
 vfmRISC621pipe_v core1(
     .Resetn_pin         ( Resetn             ), // Reset, implemented with push-button on FPGA
     .Clock_pin          ( pll_outClk              ), // Clock, implemented with Oscillator on FPGA
-    .Input_write        ( ~SW_in[4]           ), // Write enable for the input peripheral
     
     .In0               (Peripheral_input),
     .In1               (core0to1_ack),
@@ -336,7 +331,6 @@ vfmRISC621pipe_v core1(
 vfmRISC621pipe_v core2(
     .Resetn_pin         ( Resetn             ), // Reset, implemented with push-button on FPGA
     .Clock_pin          ( pll_outClk              ), // Clock, implemented with Oscillator on FPGA
-    .Input_write        ( ~SW_in[4]           ), // Write enable for the input peripheral
     
     .In0               (Peripheral_input),
     .In1               (),
@@ -379,7 +373,6 @@ vfmRISC621pipe_v core2(
 vfmRISC621pipe_v core3(
     .Resetn_pin         ( Resetn             ), // Reset, implemented with push-button on FPGA
     .Clock_pin          ( pll_outClk              ), // Clock, implemented with Oscillator on FPGA
-    .Input_write        ( ~SW_in[4]           ), // Write enable for the input peripheral
     
     .In0               (Peripheral_input),
     .In1               (),
