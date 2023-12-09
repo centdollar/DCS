@@ -89,9 +89,11 @@ vfm_proc_inst_v dut(
 
 );
 `ifdef NOCACHE
-defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab11_part3.mif";
+// defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab11_part3.mif";
+defparam dut.core0.MM.altsyncram_component.init_file = "test1.mif";
 `else
-defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab11_part3.mif";
+// defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab11_part3.mif";
+defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "test1.mif";
 `endif
 
 vfm_ir2assembly_v instruction_translate_1(
@@ -297,9 +299,10 @@ end
 integer k;
 integer i;
 
-initial begin 
-    // Reset DUT
-    Resetn_tb = 1'd0;
+
+
+initial begin
+Resetn_tb = 1'd0;
     SW_in_tb  = 5'b00000;
     clock_count = 16'd0;
     k = 0;
@@ -308,101 +311,120 @@ initial begin
     // Take DUT out of Reset
     Resetn_tb = 1'd1;
 
-    // Assert inputs to desired value
-    SW_in_tb  = 5'b01111;
-
-/**********************************************************************************************
-*   - Run simulation for 33 clocks, without pipelining this example required 81.              *
-*   - What is the relative speedup for this example?                                          *
-*          ie: how do we express the increased throughput per unit time for the pipeline?     *
-*   - Speedup = old execution time / new execution time = 81 / 33 = 2.45                      *
-*   - Now apply Ahmdal's Law to compare!                                                      *
-*   - Speedup (S) = 1/((1-Fraction Enhanced)+(Fraction Enhanced/Speedup Enhanced))            *
-*           - 16 instructions in this architecture, 3 of them stall the pipeline              *
-*           - an instruction which does not stall execution should be 4x faster               *
-*           - assume (though incorrectly!) that each instruction is used equally              *
-*   - S = 1/((1-13/16)+((13/16)/4)) = 2.56                                                    *
-**********************************************************************************************/
-
-// What is the speedup for your design? 
-    // Hint: write a basic program that does "something useful" and mildly complex, run it with pipeline enabled and disabled, compare difference in execution time
-    // Does the calculated speedup match the experimental speedup? Why or why not?
-    repeat (10) @(posedge Clock_tb);
-
-    SW_in_tb = 5'b11111;
-    
-    repeat (20) @(posedge Clock_tb);
-
-    SW_in_tb = 5'b01111;
-
-    repeat (20) @(posedge Clock_tb);
-
-    SW_in_tb = 5'b11111;
-
-    // wait(Display_out_tb == 8'b00001111);
-    repeat(80) @(posedge Clock_tb);
-    // KNOWN ISSUE: THE BOUNDS NEED TO START AT 1 FOR NO PIPE SINGLE CORE
-    for (i = 1; i < 17; i=i+1) begin
-        switches(i[3:0]);
-        wait(Display_out_tb == {4'd0, i[3:0]});
-    end
-
-    repeat(100) @(posedge Clock_tb);
-
-
-    for (i = 0; i < 16; i=i+1) begin
-        case(i)
-            4'd0: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
-            4'd5: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
-            4'd10: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
-            4'd15: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
-            default: begin switches(4'd0); wait(Display_out_tb == 8'd0); k = k + 1; end
-        endcase
-    end
-
-    SW_in_tb = 5'b10000;
-
-    repeat (7000) @(posedge Clock_tb);
-
-    // Run simulation for additional 15 clock cycles for human observation
-    repeat (15) @(posedge Clock_tb);
-
-    // End simultaion (normally we would use "$finish()" but modelsim prefers "$stop()")
+    wait(Display_out_tb == 1'b1);
     $stop();
 end
 
-`ifdef DISABLE_PIPELINE
-task switches;
-    input [3:0] i_data;
-    begin
-        
-        SW_in_tb = {1'b1, i_data};
-        repeat (40) @(posedge Clock_tb);
-        SW_in_tb = {1'b0, i_data};
-        repeat (55) @(posedge Clock_tb);
-        SW_in_tb = {1'b1, i_data};
-        repeat (20) @(posedge Clock_tb);
 
-    end
-endtask
-`else
-task switches;
-    input [3:0] i_data;
-    begin
-        repeat (10) @(posedge Clock_tb);
 
-        SW_in_tb = {1'b1, i_data};
+// `ifdef 
+// initial begin 
+//     // Reset DUT
+//     Resetn_tb = 1'd0;
+//     SW_in_tb  = 5'b00000;
+//     clock_count = 16'd0;
+//     k = 0;
+//     repeat (4) @(posedge Clock_tb);
+
+//     // Take DUT out of Reset
+//     Resetn_tb = 1'd1;
+
+//     // Assert inputs to desired value
+//     SW_in_tb  = 5'b01111;
+
+// /**********************************************************************************************
+// *   - Run simulation for 33 clocks, without pipelining this example required 81.              *
+// *   - What is the relative speedup for this example?                                          *
+// *          ie: how do we express the increased throughput per unit time for the pipeline?     *
+// *   - Speedup = old execution time / new execution time = 81 / 33 = 2.45                      *
+// *   - Now apply Ahmdal's Law to compare!                                                      *
+// *   - Speedup (S) = 1/((1-Fraction Enhanced)+(Fraction Enhanced/Speedup Enhanced))            *
+// *           - 16 instructions in this architecture, 3 of them stall the pipeline              *
+// *           - an instruction which does not stall execution should be 4x faster               *
+// *           - assume (though incorrectly!) that each instruction is used equally              *
+// *   - S = 1/((1-13/16)+((13/16)/4)) = 2.56                                                    *
+// **********************************************************************************************/
+
+// // What is the speedup for your design? 
+//     // Hint: write a basic program that does "something useful" and mildly complex, run it with pipeline enabled and disabled, compare difference in execution time
+//     // Does the calculated speedup match the experimental speedup? Why or why not?
+//     repeat (10) @(posedge Clock_tb);
+
+//     SW_in_tb = 5'b11111;
     
-        repeat (20) @(posedge Clock_tb);
+//     repeat (20) @(posedge Clock_tb);
 
-        SW_in_tb = {1'b0, i_data};
+//     SW_in_tb = 5'b01111;
 
-        repeat (20) @(posedge Clock_tb);
+//     repeat (20) @(posedge Clock_tb);
 
-        SW_in_tb = {1'b1, i_data};
+//     SW_in_tb = 5'b11111;
 
-    end
-endtask
-`endif
+//     // wait(Display_out_tb == 8'b00001111);
+//     repeat(80) @(posedge Clock_tb);
+//     // KNOWN ISSUE: THE BOUNDS NEED TO START AT 1 FOR NO PIPE SINGLE CORE
+//     for (i = 1; i < 17; i=i+1) begin
+//         switches(i[3:0]);
+//         wait(Display_out_tb == {4'd0, i[3:0]});
+//     end
+
+//     repeat(100) @(posedge Clock_tb);
+
+
+//     for (i = 0; i < 16; i=i+1) begin
+//         case(i)
+//             4'd0: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
+//             4'd5: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
+//             4'd10: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
+//             4'd15: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
+//             default: begin switches(4'd0); wait(Display_out_tb == 8'd0); k = k + 1; end
+//         endcase
+//     end
+
+//     SW_in_tb = 5'b10000;
+
+//     repeat (7000) @(posedge Clock_tb);
+
+//     // Run simulation for additional 15 clock cycles for human observation
+//     repeat (15) @(posedge Clock_tb);
+
+//     // End simultaion (normally we would use "$finish()" but modelsim prefers "$stop()")
+//     $stop();
+// end
+
+// `ifdef DISABLE_PIPELINE
+// task switches;
+//     input [3:0] i_data;
+//     begin
+        
+//         SW_in_tb = {1'b1, i_data};
+//         repeat (40) @(posedge Clock_tb);
+//         SW_in_tb = {1'b0, i_data};
+//         repeat (55) @(posedge Clock_tb);
+//         SW_in_tb = {1'b1, i_data};
+//         repeat (20) @(posedge Clock_tb);
+
+//     end
+// endtask
+// `else
+// task switches;
+//     input [3:0] i_data;
+//     begin
+//         repeat (10) @(posedge Clock_tb);
+
+//         SW_in_tb = {1'b1, i_data};
+    
+//         repeat (20) @(posedge Clock_tb);
+
+//         SW_in_tb = {1'b0, i_data};
+
+//         repeat (20) @(posedge Clock_tb);
+
+//         SW_in_tb = {1'b1, i_data};
+
+//     end
+// endtask
+// `endif
+// `endif
 
 endmodule

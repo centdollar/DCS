@@ -709,7 +709,7 @@ else if (Cache_done) begin // Normal Operation
                 else OPDR = R[Ri1];
             end
             CPY_IC: begin
-                if (Rj1 == Rj2) begin
+                if ((Ri1 == Ri2) && (IR2 != 14'h3FFF) && (IR2[13:8] != NOP_IC)) begin
                     TB = TALUH; // <-- DF-FU = Data Forwarding from the instruction in MC2
                 end
                 else begin
@@ -717,7 +717,7 @@ else if (Cache_done) begin // Normal Operation
                 end
             end //CPY_IC
             NOT_IC, SRA_IC, RRC_IC, RRN_IC, RRZ_IC, SHRL_IC, ROTL_IC, RLN_IC, RLZ_IC, ROTR_IC: begin
-                if (Ri1 == Ri2) begin
+                if ((Ri1 == Ri2) && (IR2 != 14'h3FFF) && (IR2[13:8] != NOP_IC)) begin
                     TA = TALUH; // <-- DF-FU = Data Forwarding from the instruction in MC2
                 end
                 else begin
@@ -736,7 +736,7 @@ else if (Cache_done) begin // Normal Operation
             end // ADDC_IC, SUBC_IC
 
             VADDC_IC, VSUBC_IC: begin
-                if (Ri1 == Ri2) begin
+                if ((Ri1 == Ri2) && (IR2 != 14'h3FFF) && (IR2[13:8] != NOP_IC)) begin
                     TA = TALUH; // <-- DF-FU
                 end
                 else begin
@@ -780,16 +780,16 @@ else if (Cache_done) begin // Normal Operation
                 end
 
                 else begin
-                    if ((Ri1 == Ri2) && (IR2[13:8] != NOP_IC)) begin TA = TALUH; end
+                    if ((Ri1 == Ri2) && (IR2 != 14'h3FFF) && (IR2[13:8] != NOP_IC)) begin TA = TALUH; end
                     else begin TA = R[Ri1]; end
                     
-                    if ((Rj1 == Rj2)  && (IR2[13:8] != NOP_IC)) begin TB = TALUH; end
+                    if ((Rj1 == Rj2) && (IR2 != 14'h3FFF) && (IR2[13:8] != NOP_IC)) begin TB = TALUH; end
                     else begin TB = R[Rj1]; end
                 end
             end
 
             CMP_IC: begin
-                if (Ri1 == Ri2) begin TA = TALUH; end
+                if ((Ri1 == Ri2) && (IR2 != 14'h3FFF) && (IR2[13:8] != NOP_IC)) begin TA = TALUH; end
                 else begin TA = R[Ri1]; end
 
                 TB = Rj1;    
@@ -798,13 +798,13 @@ else if (Cache_done) begin // Normal Operation
             SWAP_IC, MUL_IC, DIV_IC: begin
                 // DF-FU; Ri2 below is right for every previous instruction that returns a result in Ri2; 
                 // need to modify for a previous SWAP if the value is to be Rj2
-                if (Ri1 == Ri2) begin
+                if ((Ri1 == Ri2) && (IR2 != 14'h3FFF) && (IR2[13:8] != NOP_IC)) begin
                     TA = TALUH; 
                 end
                 else begin
                     TA = R[Ri1];
                 end
-                if (Rj1 == Ri2) begin
+                if ((Rj1 == Rj2) && (IR2 != 14'h3FFF) && (IR2[13:8] != NOP_IC)) begin
                     TB = TALUH; 
                 end
                 else begin
@@ -907,18 +907,20 @@ else if (Cache_done) begin // Normal Operation
     // After the JMP_IC instruction reaches MC3 OR (LD_IC or ST_C) reach MC1,
     // start refilling the pipe by removing the stalls. For JMP_IC the stalls are 
     // removed in this order: stall_mc0 --> stall_mc1 --> stall_mc2
-    if ((IR3 == 14'h3fff) || 
+    if (/*(IR3 == 14'h3fff) || */
         (IR4[13:8] == LD_IC) || 
         (IR4[13:8] == ST_IC) || 
+        (IR4[13:8] == JMP_IC) || 
         (IR4[13:8] == CALL_IC) || 
         (IR4[13:8] == RET_IC)) begin
         stall_mc0 = 0; 
+        MAeff = PC;
 
         // after this also reset the Ri1 Ri2 Ri3 and Rj1 Rj2 Rj3 regs
-        Ri2 = 4'd0;
-        Rj2 = 4'd0;
-        Ri3 = 4'd0;
-        Rj3 = 4'd0;
+        // Ri2 = 4'd0;
+        // Rj2 = 4'd0;
+        // Ri3 = 4'd0;
+        // Rj3 = 4'd0;
     end
 
 //---------------------------------------------------------------------------
