@@ -17,7 +17,7 @@
 *   - MISS: requested word is not stored in the cache, cache controller FSM moves blocks between main mem and cache mem  *
 *************************************************************************************************************************/
 
-module vfm_cache_4w_v2 
+module vfm_cache_4w_v2_ram 
 #(
 parameter data_width          = 14 , // architecture width
 parameter address_width       = 14 , // note that it is shortened to speed compilation

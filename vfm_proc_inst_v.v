@@ -51,14 +51,15 @@ vfm_pll my_pll(
 // =============== Modules to instantiate depending on how many cores you want==========
 // ============================= FOR 1 CORE ================================
 `ifdef SINGLECORE
-
-
-`ifdef NOCACHE
-// defparam dut.core0.MM.altsyncram_component.init_file = "test1.mif";
-// defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab11_part3.mif";
-`else
-defparam core0.MM.main_mem.altsyncram_component.init_file = "test1.mif";
-// defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab11_part3.mif";
+    `ifdef SIMULATION
+    `else
+        `ifdef NOCACHE
+            defparam dut.core0.MM.altsyncram_component.init_file = "test1.mif";
+        // defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab11_part3.mif";
+        `else
+            defparam core0.MM.main_mem.altsyncram_component.init_file = "dataforwardtest.mif";
+        // defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab11_part3.mif";
+    `endif
 `endif
 
 

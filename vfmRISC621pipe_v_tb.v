@@ -28,248 +28,229 @@ wire [13:0] Peripheral_input_tb;
 reg [15:0] clock_count;
 
 
-
+// =============== SINGLE CORE ==========================
 `ifdef SINGLECORE
-wire [95:0] ICis_MC3_tb     ; // Instruction to ASCII
-wire [95:0] ICis_MC2_tb     ; // Instruction to ASCII
-wire [95:0] ICis_MC1_tb     ; // Instruction to ASCII
+    wire [95:0] ICis_MC3_tb     ; // Instruction to ASCII
+    wire [95:0] ICis_MC2_tb     ; // Instruction to ASCII
+    wire [95:0] ICis_MC1_tb     ; // Instruction to ASCII
 
-// // Design under test instantiation
-// vfmRISC621pipe_v dut(
-//     .Resetn_pin         ( Resetn_tb             ), // Reset, implemented with push-button on FPGA
-//     .Clock_pin          ( Clock_tb              ), // Clock, implemented with Oscillator on FPGA
-//     .Input_write        ( SW_in_tb[4]           ), // Write enable for the input peripheral
-    
-//     .In0               (Peripheral_input_tb),
-//     .In1               (),
-//     .In2               (),
-//     .In3               (),
-//     .In4               (),
-//     .In5               (),
-//     .In6               (),
-//     .In7               (),
-//     .In8               (),
-//     .In9               (),
-//     .In10              (),
-//     .In11              (),
-//     .In12              (),
-//     .In13              (),
-//     .In14              (),
-//     .In15              (),
-
-//     .Out0               (Output_IO_0_tb),
-//     .Out1               (),
-//     .Out2               (),
-//     .Out3               (),
-//     .Out4               (),
-//     .Out5               (),
-//     .Out6               (),
-//     .Out7               (),
-//     .Out8               (),
-//     .Out9               (),
-//     .Out10              (),
-//     .Out11              (),
-//     .Out12              (),
-//     .Out13              (),
-//     .Out14              (),
-//     .Out15              (),
-
-//     .Write_output_0     (),
-//     .Write_output_1     (),
-//     .Write_output_2     (),
-//     .Write_output_3     ()  
-
-
-// );
-vfm_proc_inst_v dut(
+    // Core Package
+    vfm_proc_inst_v dut(
     .clock_in(Clock_tb),
     .resetn(Resetn_tb),
     .SW_in(SW_in_tb),
     .LEDS(Display_out_tb)
-
-);
-`ifdef NOCACHE
-// defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab11_part3.mif";
-defparam dut.core0.MM.altsyncram_component.init_file = "test1.mif";
-`else
-// defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab11_part3.mif";
-defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "test1.mif";
-`endif
-
-vfm_ir2assembly_v instruction_translate_1(
-    .IR           ( dut.core0.IR1        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
-    .ICis         ( ICis_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_2(
-    .IR           ( dut.core0.IR2        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
-    .ICis         ( ICis_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_3(
-    .IR           ( dut.core0.IR3        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
-    .ICis         ( ICis_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
+    );
 
 
+    // Cache Options
+    `ifdef NOCACHE
+        // defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab11_part3.mif";
+        // defparam dut.core0.PM.altsyncram_component.init_file = "dataforwardtest.mif";
+        defparam dut.core0.PM.altsyncram_component.init_file = "singleCoreMatrixMult.mif";
+    `else
+        // defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab11_part3.mif";
+        // defparam dut.core0.PM.prog_mem.altsyncram_component.init_file = "test1.mif";
+        defparam dut.core0.PM.prog_mem.altsyncram_component.init_file = "dataforwardtest.mif";
+    `endif
+
+    /**//* INSTRUCTION TRANSLATION UNITS*/
+        vfm_ir2assembly_v instruction_translate_1(
+        .IR           ( dut.core0.IR1        [13:0] ), // Instruction word within dut
+        .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
+        .ICis         ( ICis_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+        vfm_ir2assembly_v instruction_translate_2(
+        .IR           ( dut.core0.IR2        [13:0] ), // Instruction word within dut
+        .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
+        .ICis         ( ICis_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+        vfm_ir2assembly_v instruction_translate_3(
+        .IR           ( dut.core0.IR3        [13:0] ), // Instruction word within dut
+        .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
+        .ICis         ( ICis_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+    /**/
+// =============== END SINGLE CORE =====================
+// =====================================================
+
+
+// =============== 2 CORES ==========================
 // Instruction to Ascii Translators, note use of hierarchical/virtual routing
 `elsif MULTICORE2
-wire [95:0] IC0is_MC3_tb     ; // Instruction to ASCII
-wire [95:0] IC0is_MC2_tb     ; // Instruction to ASCII
-wire [95:0] IC0is_MC1_tb     ; // Instruction to ASCII
-wire [95:0] IC1is_MC3_tb     ; // Instruction to ASCII
-wire [95:0] IC1is_MC2_tb     ; // Instruction to ASCII
-wire [95:0] IC1is_MC1_tb     ; // Instruction to ASCII
+    wire [95:0] IC0is_MC3_tb     ; // Instruction to ASCII
+    wire [95:0] IC0is_MC2_tb     ; // Instruction to ASCII
+    wire [95:0] IC0is_MC1_tb     ; // Instruction to ASCII
+    wire [95:0] IC1is_MC3_tb     ; // Instruction to ASCII
+    wire [95:0] IC1is_MC2_tb     ; // Instruction to ASCII
+    wire [95:0] IC1is_MC1_tb     ; // Instruction to ASCII
 
-vfm_proc_inst_v dut(
+    vfm_proc_inst_v dut(
     .clock_in(Clock_tb),
     .resetn(Resetn_tb),
     .SW_in(SW_in_tb),
     .LEDS(Display_out_tb)
 
-);
-`ifdef NOCACHE
-defparam dut.core0.MM.altsyncram_component.init_file = "core0.mif";
-defparam dut.core1.MM.altsyncram_component.init_file = "core1.mif";
-`else
-defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "core0.mif";
-defparam dut.core1.MM.main_mem.altsyncram_component.init_file = "core1.mif";
-`endif
+    );
+    `ifdef NOCACHE
+    defparam dut.core0.MM.altsyncram_component.init_file = "core0.mif";
+    defparam dut.core1.MM.altsyncram_component.init_file = "core1.mif";
+    `else
+    defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "core0.mif";
+    defparam dut.core1.MM.main_mem.altsyncram_component.init_file = "core1.mif";
+    `endif
 
 
 
 
-vfm_ir2assembly_v instruction_translate_1(
+    vfm_ir2assembly_v instruction_translate_1(
     .IR           ( dut.core0.IR1        [13:0] ), // Instruction word within dut
     .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
     .ICis         ( IC0is_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_2(
+    );
+    vfm_ir2assembly_v instruction_translate_2(
     .IR           ( dut.core0.IR2        [13:0] ), // Instruction word within dut
     .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
     .ICis         ( IC0is_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_3(
+    );
+    vfm_ir2assembly_v instruction_translate_3(
     .IR           ( dut.core0.IR3        [13:0] ), // Instruction word within dut
     .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
     .ICis         ( IC0is_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
+    );
 
-vfm_ir2assembly_v instruction_translate_4(
+    vfm_ir2assembly_v instruction_translate_4(
     .IR           ( dut.core1.IR1        [13:0] ), // Instruction word within dut
     .Resetn_pin   ( dut.core1.Resetn_pin        ), // Reset within dut
     .ICis         ( IC1is_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_5(
+    );
+    vfm_ir2assembly_v instruction_translate_5(
     .IR           ( dut.core1.IR2        [13:0] ), // Instruction word within dut
     .Resetn_pin   ( dut.core1.Resetn_pin        ), // Reset within dut
     .ICis         ( IC1is_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_6(
+    );
+    vfm_ir2assembly_v instruction_translate_6(
     .IR           ( dut.core1.IR3        [13:0] ), // Instruction word within dut
     .Resetn_pin   ( dut.core1.Resetn_pin        ), // Reset within dut
     .ICis         ( IC1is_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
+    );
+// =============== END 2 CORES ==========================
+// ======================================================
+
+
+
+// ======================================================
+// =============== 4 CORES ==============================
+
 `elsif MULTICORE4
-wire [95:0] IC0is_MC3_tb     ; // Instruction to ASCII
-wire [95:0] IC0is_MC2_tb     ; // Instruction to ASCII
-wire [95:0] IC0is_MC1_tb     ; // Instruction to ASCII
-wire [95:0] IC1is_MC3_tb     ; // Instruction to ASCII
-wire [95:0] IC1is_MC2_tb     ; // Instruction to ASCII
-wire [95:0] IC1is_MC1_tb     ; // Instruction to ASCII
-wire [95:0] IC2is_MC3_tb     ; // Instruction to ASCII
-wire [95:0] IC2is_MC2_tb     ; // Instruction to ASCII
-wire [95:0] IC2is_MC1_tb     ; // Instruction to ASCII
-wire [95:0] IC3is_MC3_tb     ; // Instruction to ASCII
-wire [95:0] IC3is_MC2_tb     ; // Instruction to ASCII
-wire [95:0] IC3is_MC1_tb     ; // Instruction to ASCII
+    wire [95:0] IC0is_MC3_tb     ; // Instruction to ASCII
+    wire [95:0] IC0is_MC2_tb     ; // Instruction to ASCII
+    wire [95:0] IC0is_MC1_tb     ; // Instruction to ASCII
+    wire [95:0] IC1is_MC3_tb     ; // Instruction to ASCII
+    wire [95:0] IC1is_MC2_tb     ; // Instruction to ASCII
+    wire [95:0] IC1is_MC1_tb     ; // Instruction to ASCII
+    wire [95:0] IC2is_MC3_tb     ; // Instruction to ASCII
+    wire [95:0] IC2is_MC2_tb     ; // Instruction to ASCII
+    wire [95:0] IC2is_MC1_tb     ; // Instruction to ASCII
+    wire [95:0] IC3is_MC3_tb     ; // Instruction to ASCII
+    wire [95:0] IC3is_MC2_tb     ; // Instruction to ASCII
+    wire [95:0] IC3is_MC1_tb     ; // Instruction to ASCII
 
-vfm_proc_inst_v dut(
+    vfm_proc_inst_v dut(
     .clock_in(Clock_tb),
     .resetn(Resetn_tb),
     .SW_in(SW_in_tb),
     .LEDS(Display_out_tb)
 
-);
-`ifdef NOCACHE
-defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab12_core0.mif";
-defparam dut.core1.MM.altsyncram_component.init_file = "dcs_lab12_core1.mif";
-defparam dut.core2.MM.altsyncram_component.init_file = "dcs_lab12_core2.mif";
-defparam dut.core3.MM.altsyncram_component.init_file = "dcs_lab12_core3.mif";
-`else
-defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab12_core0.mif";
-defparam dut.core1.MM.main_mem.altsyncram_component.init_file = "dcs_lab12_core1.mif";
-defparam dut.core2.MM.main_mem.altsyncram_component.init_file = "dcs_lab12_core2.mif";
-defparam dut.core3.MM.main_mem.altsyncram_component.init_file = "dcs_lab12_core3.mif";
+    );
+
+
+    `ifdef NOCACHE
+        defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab12_core0.mif";
+        defparam dut.core1.MM.altsyncram_component.init_file = "dcs_lab12_core1.mif";
+        defparam dut.core2.MM.altsyncram_component.init_file = "dcs_lab12_core2.mif";
+        defparam dut.core3.MM.altsyncram_component.init_file = "dcs_lab12_core3.mif";
+    `else
+        defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab12_core0.mif";
+        defparam dut.core1.MM.main_mem.altsyncram_component.init_file = "dcs_lab12_core1.mif";
+        defparam dut.core2.MM.main_mem.altsyncram_component.init_file = "dcs_lab12_core2.mif";
+        defparam dut.core3.MM.main_mem.altsyncram_component.init_file = "dcs_lab12_core3.mif";
+    `endif
+
+    /* ================== INSTRUCTION TRANSLATION UNITS ================*/
+        vfm_ir2assembly_v instruction_translate_1(
+            .IR           ( dut.core0.IR1        [13:0] ), // Instruction word within dut
+            .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
+            .ICis         ( IC0is_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+        vfm_ir2assembly_v instruction_translate_2(
+            .IR           ( dut.core0.IR2        [13:0] ), // Instruction word within dut
+            .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
+            .ICis         ( IC0is_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+        vfm_ir2assembly_v instruction_translate_3(
+            .IR           ( dut.core0.IR3        [13:0] ), // Instruction word within dut
+            .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
+            .ICis         ( IC0is_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+
+        vfm_ir2assembly_v instruction_translate_4(
+            .IR           ( dut.core1.IR1        [13:0] ), // Instruction word within dut
+            .Resetn_pin   ( dut.core1.Resetn_pin        ), // Reset within dut
+            .ICis         ( IC1is_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+        vfm_ir2assembly_v instruction_translate_5(
+            .IR           ( dut.core1.IR2        [13:0] ), // Instruction word within dut
+            .Resetn_pin   ( dut.core1.Resetn_pin        ), // Reset within dut
+            .ICis         ( IC1is_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+        vfm_ir2assembly_v instruction_translate_6(
+            .IR           ( dut.core1.IR3        [13:0] ), // Instruction word within dut
+            .Resetn_pin   ( dut.core1.Resetn_pin        ), // Reset within dut
+            .ICis         ( IC1is_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+
+        vfm_ir2assembly_v instruction_translate_7(
+            .IR           ( dut.core2.IR1        [13:0] ), // Instruction word within dut
+            .Resetn_pin   ( dut.core2.Resetn_pin        ), // Reset within dut
+            .ICis         ( IC2is_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+        vfm_ir2assembly_v instruction_translate_8(
+            .IR           ( dut.core2.IR2        [13:0] ), // Instruction word within dut
+            .Resetn_pin   ( dut.core2.Resetn_pin        ), // Reset within dut
+            .ICis         ( IC2is_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+        vfm_ir2assembly_v instruction_translate_9(
+            .IR           ( dut.core2.IR3        [13:0] ), // Instruction word within dut
+            .Resetn_pin   ( dut.core2.Resetn_pin        ), // Reset within dut
+            .ICis         ( IC2is_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+
+        vfm_ir2assembly_v instruction_translate_10(
+            .IR           ( dut.core3.IR1        [13:0] ), // Instruction word within dut
+            .Resetn_pin   ( dut.core3.Resetn_pin        ), // Reset within dut
+            .ICis         ( IC3is_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+        vfm_ir2assembly_v instruction_translate_11(
+            .IR           ( dut.core3.IR2        [13:0] ), // Instruction word within dut
+            .Resetn_pin   ( dut.core3.Resetn_pin        ), // Reset within dut
+            .ICis         ( IC3is_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+        vfm_ir2assembly_v instruction_translate_12(
+            .IR           ( dut.core3.IR3        [13:0] ), // Instruction word within dut
+            .Resetn_pin   ( dut.core3.Resetn_pin        ), // Reset within dut
+            .ICis         ( IC3is_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+        );
+    /**/
+
 `endif
+// =============== END 4 CORES ==========================
+// ======================================================
 
 
-vfm_ir2assembly_v instruction_translate_1(
-    .IR           ( dut.core0.IR1        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
-    .ICis         ( IC0is_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_2(
-    .IR           ( dut.core0.IR2        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
-    .ICis         ( IC0is_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_3(
-    .IR           ( dut.core0.IR3        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
-    .ICis         ( IC0is_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
 
-vfm_ir2assembly_v instruction_translate_4(
-    .IR           ( dut.core1.IR1        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core1.Resetn_pin        ), // Reset within dut
-    .ICis         ( IC1is_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_5(
-    .IR           ( dut.core1.IR2        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core1.Resetn_pin        ), // Reset within dut
-    .ICis         ( IC1is_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_6(
-    .IR           ( dut.core1.IR3        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core1.Resetn_pin        ), // Reset within dut
-    .ICis         ( IC1is_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
+// ============= START OF TEST BENCH ====================
 
-vfm_ir2assembly_v instruction_translate_7(
-    .IR           ( dut.core2.IR1        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core2.Resetn_pin        ), // Reset within dut
-    .ICis         ( IC2is_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_8(
-    .IR           ( dut.core2.IR2        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core2.Resetn_pin        ), // Reset within dut
-    .ICis         ( IC2is_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_9(
-    .IR           ( dut.core2.IR3        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core2.Resetn_pin        ), // Reset within dut
-    .ICis         ( IC2is_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-
-vfm_ir2assembly_v instruction_translate_10(
-    .IR           ( dut.core3.IR1        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core3.Resetn_pin        ), // Reset within dut
-    .ICis         ( IC3is_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_11(
-    .IR           ( dut.core3.IR2        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core3.Resetn_pin        ), // Reset within dut
-    .ICis         ( IC3is_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-vfm_ir2assembly_v instruction_translate_12(
-    .IR           ( dut.core3.IR3        [13:0] ), // Instruction word within dut
-    .Resetn_pin   ( dut.core3.Resetn_pin        ), // Reset within dut
-    .ICis         ( IC3is_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
-);
-
-`endif
 
 // Setup Free-Running Clock
 always #20000 Clock_tb = ~(Clock_tb === 1'd1);
@@ -359,7 +340,7 @@ initial begin
 
     SW_in_tb = 5'b11111;
 
-    // wait(Display_out_tb == 8'b00001111);
+    wait(Display_out_tb == 8'b00001111);
     repeat(80) @(posedge Clock_tb);
     // KNOWN ISSUE: THE BOUNDS NEED TO START AT 1 FOR NO PIPE SINGLE CORE
     for (i = 1; i < 17; i=i+1) begin

@@ -154,8 +154,10 @@ reg  [3:0]    Rj3            ; // Index within registerfile
 reg  [11:0]    TSR            ; // Temporary Status Register
 reg  [11:0]    SR             ; // Status Register
 wire           Clock_not      ; // Inverted Clock
-wire           Cache_done     ;
+wire           Cache_done_MM     ;
+wire           Cache_done_PM     ;
 wire [13:0]    MM_out         ; // Output of monolithic memory 
+wire [13:0]    PM_out         ; // Output of the program memory
 reg  [29:0]    TALUS          ; // temporary alu shift reg for status shifting
 reg unsigned [13:0] SP        ;
 integer        k              ; // Index for looping construct
@@ -188,6 +190,15 @@ not clock_inverter ( Clock_not, Clock_pin ); // Using a language primative so ti
 
 
 `ifdef NOCACHE
+
+// Main memory for program data
+vfmRISC621_rom1 PM (
+    .address    ( PC      [ 13:0]), // input
+    .clock      ( Clock_not         ), // input
+    .q          ( PM_out     [13:0] )  // output // {OpCode, Ri, Rj} = PM_out
+);
+
+// Main Memory for data
 vfmRISC621_ram1 MM (
     .address    ( MAeff      [ 13:0]), // input
     .clock      ( Clock_not         ), // input
@@ -195,16 +206,30 @@ vfmRISC621_ram1 MM (
     .wren       ( WR_DM             ), // inputs
     .q          ( MM_out     [13:0] )  // output
 );
-assign Cache_done = 1;
+
+
+
+assign Cache_done_MM = 1;
+assign Cache_done_PM = 1;
 `else
-vfm_cache_4w_v2 MM (
+vfm_cache_4w_v2_ram MM (
     .Resetn      ( Resetn_pin               ), // input
     .MEM_address ( MAeff        [13:0]      ), // input   // Address coming from the CPU
     .MEM_in      ( MM_in        [13:0]      ), // input   // Write-Back data from the CPU
     .WR          ( WR_DM                    ), // input   // Write-Enable from the CPU
     .Clock       ( Clock_not                ), // input
     .MEM_out     ( MM_out       [13:0]      ), // output  // Data Stored at the Address pointed to by MEM_address
-    .Done        ( Cache_done               )  // output  // Data out is valid
+    .Done        ( Cache_done_MM               )  // output  // Data out is valid
+);
+
+vfm_cache_4w_v2_rom PM (
+    .Resetn      ( Resetn_pin               ), // input
+    .MEM_address ( PC                       ), // input   // Address coming from the CPU
+    .MEM_in      ( MM_in        [13:0]      ), // input   // Write-Back data from the CPU
+    .WR          ( WR_DM                    ), // input   // Write-Enable from the CPU
+    .Clock       ( Clock_not                ), // input
+    .MEM_out     ( PM_out       [13:0]      ), // output  // Data Stored at the Address pointed to by MEM_address
+    .Done        ( Cache_done_PM               )  // output  // Data out is valid
 );
 `endif
 
@@ -273,7 +298,7 @@ if (Resetn_pin == 0) begin
     stall_mc3   =  1'b1;
     WR_DM       =  1'b0;
 end // if (Resetn_pin == 0)
-else if (Cache_done) begin // Normal Operation
+else if (Cache_done_MM && Cache_done_PM) begin // Normal Operation
 //----------------------------------------------------------------------------
 // MACHINE CYCLE 3
 //----------------------------------------------------------------------------
@@ -293,13 +318,12 @@ else if (Cache_done) begin // Normal Operation
             end // ST_IC
             CALL_IC: begin
                 PC = MAB + MAX;
-                MAeff = MAB + MAX;
                 WR_DM = 1'b0;
                 // stall_mc0 = 1;
             end
             RET_IC: begin
                 PC = MM_out;
-                MAeff = PC;
+                // MAeff = PC;
                 WR_DM = 1'b0;
             end
             IN_IC: begin
@@ -643,7 +667,7 @@ else if (Cache_done) begin // Normal Operation
         case (IR1[13:8]) // Decode the OpCode of the IW
             LD_IC, ST_IC, JMP_IC: begin
                 MAeff = PC;
-                MAB = MM_out; // Load MAB with base address constant value embedded in IW-field; the value 0 emulates the Register Direct AM
+                MAB = PM_out; // Load MAB with base address constant value embedded in IW-field; the value 0 emulates the Register Direct AM
                 PC = PC + 1'b1;// Increment the PC to point to the location of the next IW
                 // stall_mc0 = 1;
                 if (Ri1 == 0) begin
@@ -666,10 +690,10 @@ else if (Cache_done) begin // Normal Operation
                 else if (Ri1 == 1) MAX = PC;
                 else if (Ri1 == 2) MAX = SP;
                 else MAX = R[Ri1]; 	//Load MAX
-                MAB = MM_out;
+                MAB = PM_out;
                 // Setup for write
                 WR_DM = 1'b1;
-                MM_in = PC;
+                MM_in =  PC;
                 MAeff = SP;
                 // stall_mc0 = 1;
 
@@ -837,13 +861,8 @@ else if (Cache_done) begin // Normal Operation
         IR4 = IR3;
     end
 
-
-    if ((stall_mc2 == 0) && 
-        (IR3[13:8] != JMP_IC)&& 
-        (IR3[13:8] != LD_IC) && 
-        (IR3[13:8] != ST_IC)&& 
-        (IR3[13:8] != CALL_IC) && 
-        (IR3[13:8] != RET_IC)) begin 
+    // Unstall MC3 if mc2 is unstalled and IR3 isnt a jump instr
+    if ((stall_mc2 == 0) && (IR3[13:8] != JMP_IC)) begin 
         IR3 = IR2;
         Ri3 = Ri2;
         Rj3 = Rj2;
@@ -854,6 +873,7 @@ else if (Cache_done) begin // Normal Operation
         stall_mc2 =1; 
         IR3 = 14'h3fff; 
     end 
+
     // Instruction in MC1 can move to MC2; Rj2 may need to be = Ri1 for certain instruction sequences
     if ((stall_mc1 == 0) && 
         (IR2[13:8] != JMP_IC)&& 
@@ -871,6 +891,7 @@ else if (Cache_done) begin // Normal Operation
         stall_mc1 = 1;
         IR2 = 14'h3fff;
     end 
+
     // Instruction in MC0 can move to MC1;     
     if ((stall_mc0 == 0)        && 
         (IR1[13:8] != JMP_IC)   && 
@@ -879,12 +900,10 @@ else if (Cache_done) begin // Normal Operation
         (IR1[13:8] != CALL_IC)  && 
         (IR1[13:8] != RET_IC)) begin
         // Below: IW0 is fetched directly into IR1, Ri1, and Rj1
-       
-        IR1 = MM_out; 
-        Ri1 = MM_out[7:4];
-        Rj1 = MM_out[3:0]; 
+        IR1 = PM_out; 
+        Ri1 = PM_out[7:4];
+        Rj1 = PM_out[3:0]; 
         PC = PC + 1'b1; 
-        MAeff = PC;
         stall_mc1 = 0; 
     end
     // Instruction in MC0 is stalled and IR1 is loaded with the "don't care IW"    
@@ -893,49 +912,19 @@ else if (Cache_done) begin // Normal Operation
         IR1 = 14'h3fff; 
     end 
 
-    // // If mc0 is stalled and the output of main memory is store, keep on stalling MC0
-    // if ((stall_mc0 == 1) && (MM_out[13:8] == ST_IC)) begin
-    //     stall_mc0 = 1;
-    // end
-    // else begin
-    //     stall_mc0 = 0;
-    // end
 
     // After the JMP_IC instruction reaches MC3 OR (LD_IC or ST_C) reach MC1,
     // start refilling the pipe by removing the stalls. For JMP_IC the stalls are 
     // removed in this order: stall_mc0 --> stall_mc1 --> stall_mc2
     if (/*(IR3 == 14'h3fff) || */
-        (IR4[13:8] == LD_IC) || 
-        (IR4[13:8] == ST_IC) || 
+        (IR3[13:8] == LD_IC) ||
+        (IR3[13:8] == ST_IC) ||
         (IR4[13:8] == JMP_IC) || 
         (IR4[13:8] == CALL_IC) || 
-        (IR4[13:8] == RET_IC)) begin
+        (IR4[13:8] == RET_IC)
+        ) begin
         stall_mc0 = 0; 
-        MAeff = PC;
-
-        // after this also reset the Ri1 Ri2 Ri3 and Rj1 Rj2 Rj3 regs
-        // Ri2 = 4'd0;
-        // Rj2 = 4'd0;
-        // Ri3 = 4'd0;
-        // Rj3 = 4'd0;
     end
-
-//---------------------------------------------------------------------------
-// STALL FOR MEMORY TO BE DONE
-//---------------------------------------------------------------------------
-
-// if (~Cache_done) begin
-//     stall_mc0 = 1'b1;
-//     stall_mc1 = 1'b1;
-//     stall_mc2 = 1'b1;
-//     stall_mc3 = 1'b1;
-// end
-// else begin
-//     stall_mc0 = 1'b0;
-//     stall_mc1 = 1'b0;
-//     stall_mc2 = 1'b0;
-//     stall_mc3 = 1'b0;
-// end
 
 
 
@@ -945,9 +934,9 @@ else if (Cache_done) begin // Normal Operation
     // For Debug and Benchmarking Purposes Only! -> This can help you find data-forwarding issues
     if (stall_mc0 == 0) begin
 		  
-        IR1 = MM_out;
-        Ri1 = MM_out[7:4];
-        Rj1 = MM_out[3:0];
+        IR1 = PM_out;
+        Ri1 = PM_out[7:4];
+        Rj1 = PM_out[3:0];
         PC = PC + 1'b1;
         MAeff = PC;
         stall_mc1 = 0;
