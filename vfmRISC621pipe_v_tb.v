@@ -13,10 +13,10 @@ reg  [ 4:0] SW_in_tb        ; // Switches In
 wire [ 7:0] Display_out_tb  ; // LEDs Out
 
 
-wire [13:0] Output_IO_0_tb ;
-wire [13:0] Output_IO_1_tb ;
-wire [13:0] Output_IO_2_tb ;
-wire [13:0] Output_IO_3_tb ;
+wire [15:0] Output_IO_0_tb ;
+wire [15:0] Output_IO_1_tb ;
+wire [15:0] Output_IO_2_tb ;
+wire [15:0] Output_IO_3_tb ;
 wire Write_output_1_tb;
 wire Write_output_2_tb;
 wire Write_output_3_tb;
@@ -24,7 +24,7 @@ wire Write_output_3_tb;
 
 
 // wire [13:0] IO_OUTPUT [15:0];
-wire [13:0] Peripheral_input_tb;
+wire [15:0] Peripheral_input_tb;
 reg [15:0] clock_count;
 
 
@@ -90,24 +90,24 @@ vfm_proc_inst_v dut(
 );
 `ifdef NOCACHE
 // defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab11_part3.mif";
-defparam dut.core0.MM.altsyncram_component.init_file = "test1.mif";
+defparam dut.core0.MM.altsyncram_component.init_file = "sixteen.mif";
 `else
 // defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab11_part3.mif";
-defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "test1.mif";
+defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "sixteen.mif";
 `endif
 
 vfm_ir2assembly_v instruction_translate_1(
-    .IR           ( dut.core0.IR1        [13:0] ), // Instruction word within dut
+    .IR           ( dut.core0.IR1        [15:0] ), // Instruction word within dut
     .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
     .ICis         ( ICis_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
 );
 vfm_ir2assembly_v instruction_translate_2(
-    .IR           ( dut.core0.IR2        [13:0] ), // Instruction word within dut
+    .IR           ( dut.core0.IR2        [15:0] ), // Instruction word within dut
     .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
     .ICis         ( ICis_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
 );
 vfm_ir2assembly_v instruction_translate_3(
-    .IR           ( dut.core0.IR3        [13:0] ), // Instruction word within dut
+    .IR           ( dut.core0.IR3        [15:0] ), // Instruction word within dut
     .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
     .ICis         ( ICis_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
 );
@@ -347,42 +347,42 @@ initial begin
 // What is the speedup for your design? 
     // Hint: write a basic program that does "something useful" and mildly complex, run it with pipeline enabled and disabled, compare difference in execution time
     // Does the calculated speedup match the experimental speedup? Why or why not?
-    repeat (10) @(posedge Clock_tb);
+    // repeat (10) @(posedge Clock_tb);
 
-    SW_in_tb = 5'b11111;
+    // SW_in_tb = 5'b11111;
     
-    repeat (20) @(posedge Clock_tb);
+    // repeat (20) @(posedge Clock_tb);
 
-    SW_in_tb = 5'b01111;
+    // SW_in_tb = 5'b01111;
 
-    repeat (20) @(posedge Clock_tb);
+    // repeat (20) @(posedge Clock_tb);
 
-    SW_in_tb = 5'b11111;
+    // SW_in_tb = 5'b11111;
 
-    // wait(Display_out_tb == 8'b00001111);
-    repeat(80) @(posedge Clock_tb);
-    // KNOWN ISSUE: THE BOUNDS NEED TO START AT 1 FOR NO PIPE SINGLE CORE
-    for (i = 1; i < 17; i=i+1) begin
-        switches(i[3:0]);
-        wait(Display_out_tb == {4'd0, i[3:0]});
-    end
+    // // wait(Display_out_tb == 8'b00001111);
+    // repeat(80) @(posedge Clock_tb);
+    // // KNOWN ISSUE: THE BOUNDS NEED TO START AT 1 FOR NO PIPE SINGLE CORE
+    // for (i = 1; i < 17; i=i+1) begin
+    //     switches(i[3:0]);
+    //     wait(Display_out_tb == {4'd0, i[3:0]});
+    // end
 
-    repeat(100) @(posedge Clock_tb);
+    // repeat(100) @(posedge Clock_tb);
 
 
-    for (i = 0; i < 16; i=i+1) begin
-        case(i)
-            4'd0: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
-            4'd5: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
-            4'd10: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
-            4'd15: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
-            default: begin switches(4'd0); wait(Display_out_tb == 8'd0); k = k + 1; end
-        endcase
-    end
+    // for (i = 0; i < 16; i=i+1) begin
+    //     case(i)
+    //         4'd0: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
+    //         4'd5: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
+    //         4'd10: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
+    //         4'd15: begin switches(4'd1); wait(Display_out_tb == 8'd1); end
+    //         default: begin switches(4'd0); wait(Display_out_tb == 8'd0); k = k + 1; end
+    //     endcase
+    // end
 
-    SW_in_tb = 5'b10000;
+    // SW_in_tb = 5'b10000;
 
-    wait(Display_out_tb == 5);
+    wait(Display_out_tb == 1);
 
     // Run simulation for additional 15 clock cycles for human observation
 

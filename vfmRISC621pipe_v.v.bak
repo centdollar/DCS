@@ -9,51 +9,50 @@
 // `define DISABLE_PIPELINE      // Use for debuging issues with data-forwarding!
 // `define NOCACHE              // Uncomment to remove hierachical memory
 `include "TestBenchControl.vh"
-
+`define INSTR_WIDTH 16
 module vfmRISC621pipe_v (
 input             Resetn_pin        , // Reset, implemented with push-button on FPGA
 input             Clock_pin         , // Clock, implemented with Oscillator on FPGA
 
-input [15:0]       In0,     // write signal that triggers on MC3 of OUT_IC if we wrote to output peripheral 1
-input [15:0]       In1,
-input [15:0]       In2,
-input [15:0]       In3,
-input [15:0]       In4,
-input [15:0]       In5,
-input [15:0]       In6,
-input [15:0]       In7,
-input [15:0]       In8,
-input [15:0]       In9,
-input [15:0]       In10,
-input [15:0]       In11,
-input [15:0]       In12,
-input [15:0]       In13,
-input [15:0]       In14,
-input [15:0]       In15,
+input [INSTR_WIDTH-1:0]       In0,     // write signal that triggers on MC3 of OUT_IC if we wrote to output peripheral 1
+input [INSTR_WIDTH-1:0]       In1,
+input [INSTR_WIDTH-1:0]       In2,
+input [INSTR_WIDTH-1:0]       In3,
+input [INSTR_WIDTH-1:0]       In4,
+input [INSTR_WIDTH-1:0]       In5,
+input [INSTR_WIDTH-1:0]       In6,
+input [INSTR_WIDTH-1:0]       In7,
+input [INSTR_WIDTH-1:0]       In8,
+input [INSTR_WIDTH-1:0]       In9,
+input [INSTR_WIDTH-1:0]       In10,
+input [INSTR_WIDTH-1:0]       In11,
+input [INSTR_WIDTH-1:0]       In12,
+input [INSTR_WIDTH-1:0]       In13,
+input [INSTR_WIDTH-1:0]       In14,
+input [INSTR_WIDTH-1:0]       In15,
 
 // These signals are used for inter-core communication using OUT_IC
 // Are used as the tri-state buffer inputs for the input peripherals for other cores
-output reg  [15:0]       Out0,     // write signal that triggers on MC3 of OUT_IC if we wrote to output peripheral 1
-output reg  [15:0]       Out1,
-output reg  [15:0]       Out2,
-output reg  [15:0]       Out3,
-output reg  [15:0]       Out4,
-output reg  [15:0]       Out5,
-output reg  [15:0]       Out6,
-output reg  [15:0]       Out7,
-output reg  [15:0]       Out8,
-output reg  [15:0]       Out9,
-output reg  [15:0]       Out10,
-output reg  [15:0]       Out11,
-output reg  [15:0]       Out12,
-output reg  [15:0]       Out13,
-output reg  [15:0]       Out14,
-output reg  [15:0]       Out15
+output reg  [INSTR_WIDTH-1:0]       Out0,     // write signal that triggers on MC3 of OUT_IC if we wrote to output peripheral 1
+output reg  [INSTR_WIDTH-1:0]       Out1,
+output reg  [INSTR_WIDTH-1:0]       Out2,
+output reg  [INSTR_WIDTH-1:0]       Out3,
+output reg  [INSTR_WIDTH-1:0]       Out4,
+output reg  [INSTR_WIDTH-1:0]       Out5,
+output reg  [INSTR_WIDTH-1:0]       Out6,
+output reg  [INSTR_WIDTH-1:0]       Out7,
+output reg  [INSTR_WIDTH-1:0]       Out8,
+output reg  [INSTR_WIDTH-1:0]       Out9,
+output reg  [INSTR_WIDTH-1:0]       Out10,
+output reg  [INSTR_WIDTH-1:0]       Out11,
+output reg  [INSTR_WIDTH-1:0]       Out12,
+output reg  [INSTR_WIDTH-1:0]       Out13,
+output reg  [INSTR_WIDTH-1:0]       Out14,
+output reg  [INSTR_WIDTH-1:0]       Out15
 
 
 
 );
-parameter INSTR_WIDTH = 16;
 
 //----------------------------------------------------------------------------
 //-- Declare machine cycle and instruction cycle parameters
@@ -101,15 +100,15 @@ localparam [5:0] RRN_IC  = 6'b011001 ; // Rotate right through negative
 localparam [5:0] RRZ_IC  = 6'b011010 ; // Rotate right thorugh zero
 
 //Jump conditions
-localparam [4:0]  JU  = 5'b00000 ; // Jump Unconditional
-localparam [4:0]  JC1 = 5'b10000 ; // Jump if Carry == 1
-localparam [4:0]  JN1 = 5'b01000 ; // Jump if Negative == 1
-localparam [4:0]  JV1 = 5'b00100 ; // Jump if Overflow == 1
-localparam [4:0]  JZ1 = 5'b00010 ; // Jump if Zero == 1
-localparam [4:0]  JC0 = 5'b01110 ; // Jump if Carry == 0
-localparam [4:0]  JN0 = 5'b10110 ; // Jump if Negative == 0
-localparam [4:0]  JV0 = 5'b11010 ; // Jump if Overflow == 0
-localparam [4:0]  JZ0 = 5'b11100 ; // Jump if Zero == 0
+localparam [5:0]  JU  = 4'b0000 ; // Jump Unconditional
+localparam [5:0]  JC1 = 4'b1000 ; // Jump if Carry == 1
+localparam [5:0]  JN1 = 4'b0100 ; // Jump if Negative == 1
+localparam [5:0]  JV1 = 4'b0010 ; // Jump if Overflow == 1
+localparam [5:0]  JZ1 = 4'b0001 ; // Jump if Zero == 1
+localparam [5:0]  JC0 = 4'b0111 ; // Jump if Carry == 0
+localparam [5:0]  JN0 = 4'b1011 ; // Jump if Negative == 0
+localparam [5:0]  JV0 = 4'b1101 ; // Jump if Overflow == 0
+localparam [5:0]  JZ0 = 4'b1110 ; // Jump if Zero == 0
 
 // CALL and REturn
 localparam [5:0]  CALL_IC = 6'b011011;
@@ -158,7 +157,7 @@ reg  [11:0]                     SR             ; // Status Register
 wire                            Clock_not      ; // Inverted Clock
 wire                            Cache_done     ;
 wire [INSTR_WIDTH-1:0]          MM_out         ; // Output of monolithic memory 
-reg  [2*INSTR_WIDTH+1:0]        TALUS          ; // temporary alu shift reg for status shifting
+reg  [2*INSTR_WIDTH-1:0]        TALUS          ; // temporary alu shift reg for status shifting
 reg unsigned [INSTR_WIDTH-1:0]  SP        ;
 integer        k              ; // Index for looping construct
 
@@ -190,9 +189,8 @@ not clock_inverter ( Clock_not, Clock_pin ); // Using a language primative so ti
 
 
 `ifdef NOCACHE
-// only use 14 bits for memory rn, the lower 14
 vfmRISC621_ram1 MM (
-    .address    ( MAeff      [ 13:0]), // input
+    .address    ( MAeff      [ INSTR_WIDTH-1:0]), // input
     .clock      ( Clock_not         ), // input
     .data       ( MM_in      [INSTR_WIDTH-1:0] ), // input
     .wren       ( WR_DM             ), // inputs
@@ -202,7 +200,7 @@ assign Cache_done = 1;
 `else
 vfm_cache_4w_v2 MM (
     .Resetn      ( Resetn_pin               ), // input
-    .MEM_address ( MAeff        [13:0]      ), // input   // Address coming from the CPU
+    .MEM_address ( MAeff        [INSTR_WIDTH-1:0]      ), // input   // Address coming from the CPU
     .MEM_in      ( MM_in        [INSTR_WIDTH-1:0]      ), // input   // Write-Back data from the CPU
     .WR          ( WR_DM                    ), // input   // Write-Enable from the CPU
     .Clock       ( Clock_not                ), // input
@@ -360,7 +358,7 @@ else if (Cache_done) begin // Normal Operation
 // MACHINE CYCLE 2
 //----------------------------------------------------------------------------
     if ((stall_mc2 == 0) && (IR2 != 16'hFFFF)) begin
-        case (IR2[15:10]) // Decode the OpCode of the IW
+        case (IR2[13:8]) // Decode the OpCode of the IW
             LD_IC, JMP_IC: begin
                 MAeff = MAB + MAX; // Address Arithmetic to calculate the effective address
                 WR_DM = 1'b0; // For LD_IC we ensure here that WR_DM=0.
@@ -377,7 +375,7 @@ else if (Cache_done) begin // Normal Operation
                         MM_in = R[Ri3];
                     end
                     // Next, resolve the SWAP write-back:
-                    else if (Rj2 == Rj3 && IR3[INSTR_WIDTH-1:0] == SWAP_IC) begin
+                    else if (Rj2 == Rj3 && IR3[INSTR_WIDTH-1:`0] == SWAP_IC) begin
                         MM_in = R[Rj3];
                     end
                     // OR without Data-Forwarding:
@@ -604,17 +602,16 @@ else if (Cache_done) begin // Normal Operation
                 end // ROTR_IC
             RLN_IC:
                 begin
-							//		[33:18]	17	  [16:1]  0
                     TALUS = {TA, TSR[10], TA, TSR[10]} << TB;
-                    TALUH = TALUS[33:18];	
-                    TSR[10] = TALUH[15]; // Negative
+                    TALUH = TALUS[33:17];	
+                    TSR[10] = TALUH[17]; // Negative
                     if (TALUH[15:0] == 16'h0000) TSR[8] = 1; else TSR[8] = 0; // Zero\
                 end // RLN_IC
             RLZ_IC:
                 begin
                     TALUS = {TA, TSR[8], TA, TSR[8]} << TB;
-                    TALUH = TALUS[33:18];
-                    TSR[10] = TALUH[15]; // Negative
+                    TALUH = TALUS[33:17];
+                    TSR[10] = TALUH[17]; // Negative
                     if (TALUH[15:0] == 16'h0000) TSR[8] = 1; else TSR[8] = 0; // Zero\
                 end // RLZ_IC
             RRN_IC:

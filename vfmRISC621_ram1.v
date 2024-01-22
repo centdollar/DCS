@@ -45,9 +45,9 @@ module vfmRISC621_ram1 (
 
 	input	[13:0]  address;
 	input	  clock;
-	input	[13:0]  data;
+	input	[15:0]  data;
 	input	  wren;
-	output	[13:0]  q;
+	output	[15:0]  q;
 `ifndef ALTERA_RESERVED_QIS
 // synopsys translate_off
 `endif
@@ -56,8 +56,8 @@ module vfmRISC621_ram1 (
 // synopsys translate_on
 `endif
 
-	wire [13:0] sub_wire0;
-	wire [13:0] q = sub_wire0[13:0];
+	wire [15:0] sub_wire0;
+	wire [15:0] q = sub_wire0[15:0];
 
 	altsyncram	altsyncram_component (
 				.address_a (address),
@@ -86,7 +86,7 @@ module vfmRISC621_ram1 (
 	defparam
 		altsyncram_component.clock_enable_input_a = "BYPASS",
 		altsyncram_component.clock_enable_output_a = "BYPASS",
-		// altsyncram_component.init_file = "dcs_lab11_part3.mif",
+		altsyncram_component.init_file = "sixteen.mif",
 		altsyncram_component.intended_device_family = "Cyclone V",
 		altsyncram_component.lpm_hint = "ENABLE_RUNTIME_MOD=NO",
 		altsyncram_component.lpm_type = "altsyncram",
@@ -97,7 +97,7 @@ module vfmRISC621_ram1 (
 		altsyncram_component.power_up_uninitialized = "FALSE",
 		altsyncram_component.read_during_write_mode_port_a = "NEW_DATA_NO_NBE_READ",
 		altsyncram_component.widthad_a = 14,
-		altsyncram_component.width_a = 14,
+		altsyncram_component.width_a = 16,
 		altsyncram_component.width_byteena_a = 1;
 
 
@@ -125,7 +125,7 @@ endmodule
 // Retrieval info: PRIVATE: JTAG_ENABLED NUMERIC "0"
 // Retrieval info: PRIVATE: JTAG_ID STRING "NONE"
 // Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
-// Retrieval info: PRIVATE: MIFfilename STRING "dcs_lab11_part3.mif"
+// Retrieval info: PRIVATE: MIFfilename STRING "sixteen.mif"
 // Retrieval info: PRIVATE: NUMWORDS_A NUMERIC "16384"
 // Retrieval info: PRIVATE: RAM_BLOCK_TYPE NUMERIC "0"
 // Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_PORT_A NUMERIC "3"
@@ -137,12 +137,12 @@ endmodule
 // Retrieval info: PRIVATE: UseDQRAM NUMERIC "1"
 // Retrieval info: PRIVATE: WRCONTROL_ACLR_A NUMERIC "0"
 // Retrieval info: PRIVATE: WidthAddr NUMERIC "14"
-// Retrieval info: PRIVATE: WidthData NUMERIC "14"
+// Retrieval info: PRIVATE: WidthData NUMERIC "16"
 // Retrieval info: PRIVATE: rden NUMERIC "0"
 // Retrieval info: LIBRARY: altera_mf altera_mf.altera_mf_components.all
 // Retrieval info: CONSTANT: CLOCK_ENABLE_INPUT_A STRING "BYPASS"
 // Retrieval info: CONSTANT: CLOCK_ENABLE_OUTPUT_A STRING "BYPASS"
-// Retrieval info: CONSTANT: INIT_FILE STRING "dcs_lab11_part3.mif"
+// Retrieval info: CONSTANT: INIT_FILE STRING "sixteen.mif"
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone V"
 // Retrieval info: CONSTANT: LPM_HINT STRING "ENABLE_RUNTIME_MOD=NO"
 // Retrieval info: CONSTANT: LPM_TYPE STRING "altsyncram"
@@ -153,18 +153,18 @@ endmodule
 // Retrieval info: CONSTANT: POWER_UP_UNINITIALIZED STRING "FALSE"
 // Retrieval info: CONSTANT: READ_DURING_WRITE_MODE_PORT_A STRING "NEW_DATA_NO_NBE_READ"
 // Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "14"
-// Retrieval info: CONSTANT: WIDTH_A NUMERIC "14"
+// Retrieval info: CONSTANT: WIDTH_A NUMERIC "16"
 // Retrieval info: CONSTANT: WIDTH_BYTEENA_A NUMERIC "1"
 // Retrieval info: USED_PORT: address 0 0 14 0 INPUT NODEFVAL "address[13..0]"
 // Retrieval info: USED_PORT: clock 0 0 0 0 INPUT VCC "clock"
-// Retrieval info: USED_PORT: data 0 0 14 0 INPUT NODEFVAL "data[13..0]"
-// Retrieval info: USED_PORT: q 0 0 14 0 OUTPUT NODEFVAL "q[13..0]"
+// Retrieval info: USED_PORT: data 0 0 16 0 INPUT NODEFVAL "data[15..0]"
+// Retrieval info: USED_PORT: q 0 0 16 0 OUTPUT NODEFVAL "q[15..0]"
 // Retrieval info: USED_PORT: wren 0 0 0 0 INPUT NODEFVAL "wren"
 // Retrieval info: CONNECT: @address_a 0 0 14 0 address 0 0 14 0
 // Retrieval info: CONNECT: @clock0 0 0 0 0 clock 0 0 0 0
-// Retrieval info: CONNECT: @data_a 0 0 14 0 data 0 0 14 0
+// Retrieval info: CONNECT: @data_a 0 0 16 0 data 0 0 16 0
 // Retrieval info: CONNECT: @wren_a 0 0 0 0 wren 0 0 0 0
-// Retrieval info: CONNECT: q 0 0 14 0 @q_a 0 0 14 0
+// Retrieval info: CONNECT: q 0 0 16 0 @q_a 0 0 16 0
 // Retrieval info: GEN_FILE: TYPE_NORMAL vfmRISC621_ram1.v TRUE
 // Retrieval info: GEN_FILE: TYPE_NORMAL vfmRISC621_ram1.inc FALSE
 // Retrieval info: GEN_FILE: TYPE_NORMAL vfmRISC621_ram1.cmp FALSE

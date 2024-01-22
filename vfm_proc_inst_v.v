@@ -14,10 +14,10 @@ module vfm_proc_inst_v(
     output [7:0] LEDS
 );
 
-wire [13:0] display_out;
+wire [15:0] display_out;
 wire pll_outClk;
 wire Resetn;
-wire [13:0] Peripheral_input;
+wire [15:0] Peripheral_input;
 
 assign LEDS = display_out[7:0];
 assign Peripheral_input = {9'd0, SW_in[3:0], SW_in[4]};
@@ -57,7 +57,7 @@ vfm_pll my_pll(
 // defparam dut.core0.MM.altsyncram_component.init_file = "test1.mif";
 // defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab11_part3.mif";
 `else
-defparam core0.MM.main_mem.altsyncram_component.init_file = "test1.mif";
+defparam core0.MM.main_mem.altsyncram_component.init_file = "sixteen.mif";
 // defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab11_part3.mif";
 `endif
 
@@ -67,21 +67,21 @@ vfmRISC621pipe_v core0(
     .Clock_pin          ( pll_outClk              ), // Clock, implemented with Oscillator on FPGA
     
     .In0               (Peripheral_input),
-    .In1               (),
-    .In2               (),
-    .In3               (),
-    .In4               (),
-    .In5               (),
-    .In6               (),
-    .In7               (),
-    .In8               (),
-    .In9               (),
-    .In10              (),
-    .In11              (),
-    .In12              (),
-    .In13              (),
-    .In14              (),
-    .In15              (),
+    .In1               (16'd0),
+    .In2               (16'd0),
+    .In3               (16'd0),
+    .In4               (16'd0),
+    .In5               (16'd0),
+    .In6               (16'd0),
+    .In7               (16'd0),
+    .In8               (16'd0),
+    .In9               (16'd0),
+    .In10              (16'd0),
+    .In11              (16'd0),
+    .In12              (16'd0),
+    .In13              (16'd0),
+    .In14              (16'd0),
+    .In15              (16'd0),
 
     .Out0               (display_out),
     .Out1               (),

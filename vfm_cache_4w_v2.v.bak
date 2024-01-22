@@ -19,7 +19,7 @@
 
 module vfm_cache_4w_v2 
 #(
-parameter data_width          = 16 , // architecture width
+parameter data_width          = 14 , // architecture width
 parameter address_width       = 14 , // note that it is shortened to speed compilation
 parameter word_addr_width     = 3  , // word field width
 parameter group_addr_width    = 2  , // group field width
