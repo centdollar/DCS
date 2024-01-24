@@ -8,6 +8,18 @@
 // `define SIMULATION              // REMOVE FOR FPGA EMULATION!
 // `define DISABLE_PIPELINE      // Use for debuging issues with data-forwarding!
 // `define NOCACHE              // Uncomment to remove hierachical memory
+
+// TODO:
+/*
+- 14 -> 16 bit                  DONE
+- FP add, sub, mul, div
+- VN -> Harvard                 
+- 2 bit branch predictor
+- SIMD mul and div
+*/
+
+
+
 `include "TestBenchControl.vh"
 
 module vfmRISC621pipe_v (
@@ -786,7 +798,7 @@ else if (Cache_done) begin // Normal Operation
                     if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC)) begin TA = TALUH; end
                     else begin TA = R[Ri1]; end
                     
-                    if ((Rj1 == Rj2) && (IR2 != 16'h3FFF) && (IR2[15:10] != NOP_IC)) begin TB = TALUH; end
+                    if ((Rj1 == Rj2) && (IR2 != 16'h3FFF) && (IR2[15:10] != NOP_IC)&& (IR2[15:10] != ADDC_IC)&& (IR2[15:10] != SUBC_IC)) begin TB = TALUH; end
                     else begin TB = R[Rj1]; end
                 end
             end

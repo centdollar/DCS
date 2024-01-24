@@ -57,7 +57,7 @@ vfm_pll my_pll(
 // defparam dut.core0.MM.altsyncram_component.init_file = "test1.mif";
 // defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab11_part3.mif";
 `else
-defparam core0.MM.main_mem.altsyncram_component.init_file = "sixteen.mif";
+defparam core0.MM.main_mem.altsyncram_component.init_file = "test16.mif";
 // defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab11_part3.mif";
 `endif
 
