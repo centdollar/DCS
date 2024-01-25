@@ -90,10 +90,10 @@ vfm_proc_inst_v dut(
 );
 `ifdef NOCACHE
 // defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab11_part3.mif";
-defparam dut.core0.MM.altsyncram_component.init_file = "test16.mif";
+defparam dut.core0.PM.altsyncram_component.init_file = "test16.mif";
 `else
 // defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab11_part3.mif";
-defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "test16.mif";
+defparam dut.core0.PM.PM.altsyncram_component.init_file = "test16.mif";
 `endif
 
 vfm_ir2assembly_v instruction_translate_1(
