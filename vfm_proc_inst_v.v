@@ -54,10 +54,10 @@ vfm_pll my_pll(
 
 
 `ifdef NOCACHE
-// defparam dut.core0.MM.altsyncram_component.init_file = "test1.mif";
+defparam core0.PM.altsyncram_component.init_file = "test16.mif";
 // defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab11_part3.mif";
 `else
-defparam core0.MM.main_mem.altsyncram_component.init_file = "test16.mif";
+defparam core0.PM.PM.altsyncram_component.init_file = "test16.mif";
 // defparam dut.core0.MM.main_mem.altsyncram_component.init_file = "dcs_lab11_part3.mif";
 `endif
 
