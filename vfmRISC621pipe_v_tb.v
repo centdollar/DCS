@@ -30,9 +30,9 @@ reg [15:0] clock_count;
 
 
 `ifdef SINGLECORE
-wire [95:0] ICis_MC3_tb     ; // Instruction to ASCII
-wire [95:0] ICis_MC2_tb     ; // Instruction to ASCII
-wire [95:0] ICis_MC1_tb     ; // Instruction to ASCII
+wire [111:0] ICis_MC3_tb     ; // Instruction to ASCII
+wire [111:0] ICis_MC2_tb     ; // Instruction to ASCII
+wire [111:0] ICis_MC1_tb     ; // Instruction to ASCII
 
 // // Design under test instantiation
 // vfmRISC621pipe_v dut(
@@ -99,17 +99,17 @@ defparam dut.core0.PM.PM.altsyncram_component.init_file = "test16.mif";
 vfm_ir2assembly_v instruction_translate_1(
     .IR           ( dut.core0.IR1        [15:0] ), // Instruction word within dut
     .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
-    .ICis         ( ICis_MC1_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+    .ICis         ( ICis_MC1_tb    [111:0] )  // ASCII stream translating IR from Binary to English
 );
 vfm_ir2assembly_v instruction_translate_2(
     .IR           ( dut.core0.IR2        [15:0] ), // Instruction word within dut
     .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
-    .ICis         ( ICis_MC2_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+    .ICis         ( ICis_MC2_tb    [111:0] )  // ASCII stream translating IR from Binary to English
 );
 vfm_ir2assembly_v instruction_translate_3(
     .IR           ( dut.core0.IR3        [15:0] ), // Instruction word within dut
     .Resetn_pin   ( dut.core0.Resetn_pin        ), // Reset within dut
-    .ICis         ( ICis_MC3_tb    [95:0] )  // ASCII stream translating IR from Binary to English
+    .ICis         ( ICis_MC3_tb    [111:0] )  // ASCII stream translating IR from Binary to English
 );
 
 
