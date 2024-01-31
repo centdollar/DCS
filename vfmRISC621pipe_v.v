@@ -72,46 +72,69 @@ parameter INSTR_WIDTH = 16;
 //----------------------------------------------------------------------------
 
 // Instructions
+// MEMORY INSTRUCTIONS
     //reg-mem data transfer
 localparam [5:0] LD_IC   = 6'b000000 ; // Load
 localparam [5:0] ST_IC   = 6'b000001 ; // Store
-    //reg-reg data transfer
-localparam [5:0] CPY_IC  = 6'b000010 ; // Copy
-localparam [5:0] SWAP_IC = 6'b000011 ; // Swap
-    //flow control
-localparam [5:0] JMP_IC  = 6'b000100 ; // Jump
-    //arithmetic manipulation
-localparam [5:0] ADD_IC  = 6'b000101 ; // Add
-localparam [5:0] SUB_IC  = 6'b000110 ; // Subtract
-localparam [5:0] ADDC_IC = 6'b000111 ; // Add Constant
-localparam [5:0] SUBC_IC = 6'b001000 ; // Subtract Constant
+
+// REG REG INSTRUCTION TYPE
+    // Peripheral Output
+localparam [5:0] IN_IC   = 6'b100000; // Peripheral input
+localparam [5:0] OUT_IC  = 6'b100001; // Peripheral Output
+
+    // reg-reg manipulation
+localparam [5:0] CPY_IC  = 6'b100011 ; // Copy
+localparam [5:0] SWAP_IC = 6'b100010 ; // Swap
+
+    // primititve integer manip
+localparam [5:0] ADD_IC  = 6'b101000 ; // Add
+localparam [5:0] SUB_IC  = 6'b101001 ; // Subtract
+localparam [5:0] MUL_IC  = 6'b101010 ; // Multiply
+localparam [5:0] DIV_IC  = 6'b101011 ; // Divide
+
     //logic manipulation
-localparam [5:0] NOT_IC  = 6'b001001 ; // Not
-localparam [5:0] AND_IC  = 6'b001010 ; // And
-localparam [5:0] OR_IC   = 6'b001011 ; // Or
-    //shift/rotate
-// localparam [5:0] SRA_IC  = 6'b1100 ; // Shift Right Arithmetic
-localparam [5:0] RRC_IC  = 6'b001101 ; // Rotate Right Through Carry
-    //SIMD (vector) - to be implemented later
-localparam [5:0] VADD_IC = 6'b001110 ; // Vector Add
-localparam [5:0] VSUB_IC = 6'b001111 ; // Vector Subtract
-localparam [5:0] VADDC_IC = 6'b100000 ; // Vector Add
-localparam [5:0] VSUBC_IC = 6'b100001 ; // Vector Subtract
+localparam [5:0] NOT_IC  = 6'b100111 ; // Not
+localparam [5:0] AND_IC  = 6'b100101 ; // And
+localparam [5:0] OR_IC   = 6'b100110 ; // Or
+localparam [5:0] XOR_IC  = 6'b100100 ; // XOR
 
+    //SIMD (vector) 
+localparam [5:0] VADD_IC = 6'b110000 ; // Vector Add
+localparam [5:0] VSUB_IC = 6'b110001 ; // Vector Subtract
+localparam [5:0] VMUL_IC  = 6'b110010 ; // Vector Multiplication
+localparam [5:0] VDIV_IC  = 6'b110011 ; // Vector Division
 
+// REG IMMED INSTRUCTIONS
 
-localparam [5:0] MUL_IC  = 6'b010000 ; // Multiply
-localparam [5:0] DIV_IC  = 6'b010001 ; // Divide
-localparam [5:0] XOR_IC  = 6'b010010 ; // XOR
-localparam [5:0] SHRL_IC = 6'b010011 ; // Shift right logical
-localparam [5:0] SRA_IC = 6'b010100 ; // Shift right arithmetic
-localparam [5:0] ROTL_IC = 6'b010101 ; // Rotate left 
-localparam [5:0] ROTR_IC = 6'b010110 ; // rotate right
-localparam [5:0] RLN_IC  = 6'b010111 ; // rotate left through negative
-localparam [5:0] RLZ_IC  = 6'b011000 ; // rotate left through zero
+localparam [5:0]  CMP_IC  = 6'b010000;
+
+    // Vector Constant 
+localparam [5:0] VADDC_IC = 6'b111011 ; // Vector Add
+localparam [5:0] VSUBC_IC = 6'b111100 ; // Vector Subtract
+
+    // Shifts and rotates
+localparam [5:0] SHRL_IC = 6'b010001 ; // Shift right logical
+localparam [5:0] SRA_IC = 6'b010010 ; // Shift right arithmetic
+localparam [5:0] ROTL_IC = 6'b010011 ; // Rotate left 
+localparam [5:0] ROTR_IC = 6'b010100 ; // rotate right
+
+    // integer manip constant
+localparam [5:0] ADDC_IC = 6'b010101 ; // Add Constant
+localparam [5:0] SUBC_IC = 6'b010110 ; // Subtract Constant
+
+    // rotate right through status
+localparam [5:0] RRC_IC  = 6'b011000 ; // Rotate Right Through Carry
 localparam [5:0] RRN_IC  = 6'b011001 ; // Rotate right through negative
 localparam [5:0] RRZ_IC  = 6'b011010 ; // Rotate right thorugh zero
 
+    // rotate left through status
+localparam [5:0] RLN_IC  = 6'b011100 ; // rotate left through negative
+localparam [5:0] RLZ_IC  = 6'b011101 ; // rotate left through zero
+
+// JUMP
+    //flow control
+localparam [5:0] JMP_IC  = 6'b000100 ; // Jump
+    //arithmetic manipulation
 //Jump conditions
 localparam [4:0]  JU  = 5'b00000 ; // Jump Unconditional
 localparam [4:0]  JC1 = 5'b10000 ; // Jump if Carry == 1
@@ -124,15 +147,10 @@ localparam [4:0]  JV0 = 5'b11010 ; // Jump if Overflow == 0
 localparam [4:0]  JZ0 = 5'b11100 ; // Jump if Zero == 0
 
 // CALL and REturn
-localparam [5:0]  CALL_IC = 6'b011011;
-localparam [5:0]  RET_IC  = 6'b011100;
-
-localparam [5:0]  IN_IC   = 6'b011101;
-localparam [5:0]  OUT_IC  = 6'b011110;
-
+localparam [5:0]  CALL_IC = 6'b111110;
+localparam [5:0]  RET_IC  = 6'b111101;
 
 // Compare instruction for loops
-localparam [5:0]  CMP_IC  = 6'b110000;
 localparam [5:0]  NOP_IC  = 6'b111000;
 
 
@@ -363,15 +381,15 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
                     default: PC = PC;
                 endcase
             end // JMP_IC
-            CMP_IC, ADD_IC, SUB_IC, ADDC_IC, SUBC_IC, VADD_IC, VSUB_IC, VADDC_IC, VSUBC_IC, NOT_IC, AND_IC, OR_IC, XOR_IC, ROTL_IC, ROTR_IC, SHRL_IC, SRA_IC, RLN_IC, RLZ_IC, RRN_IC, RRZ_IC : begin
-                if (CMP_IC == IR3[INSTR_WIDTH-1:10]) begin
-                    SR = TSR;
-                end 
-                else begin 
-                    R[IR3[9:5]] = TALUH;
-                    SR = TSR;
-                end
+            ADD_IC, SUB_IC, ADDC_IC, SUBC_IC, VADD_IC, VSUB_IC, VADDC_IC, VSUBC_IC, NOT_IC, AND_IC, OR_IC, XOR_IC, ROTL_IC, ROTR_IC, SHRL_IC, SRA_IC, RLN_IC, RLZ_IC, RRN_IC, RRC_IC, RRZ_IC, VMUL_IC, VDIV_IC : begin
+                R[IR3[9:5]] = TALUH;
+                SR = TSR;
             end // ADD_IC, SUB_IC, ADDC_IC, SUBC_IC, NOT_IC, AND_IC, OR_IC, SRA_IC, RRC_IC
+
+            CMP_IC: begin
+                SR = TSR;
+            end
+            
             MUL_IC, DIV_IC: begin
                 R[IR3[9:5]] = TALUH;
                 R[IR3[4:0]] = TALUL;
@@ -537,6 +555,45 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
                 TALUH = {TALUout[14:8], TALUout[6:0]};
             end // VSUB_IC, VSUBC_IC
 
+            VMUL_IC: begin
+                TALUout[16:9] = TA[15:8] * TB[15:8];
+                TALUout[8:0]  = TA[7:0]  * TB[7:0];
+
+                // Top half of Vector
+                TSR[11] = TALUout[16]; // Carry
+                TSR[10] = TALUout[15]; // Negative
+                TSR[9] = ((TA[14] ~^ TB[14]) & TA[14]) ^ (TALUout[14] & (TA[14] ~^ TB[14])); // V Overflow
+                if (TALUout[16:9] == 8'd0) begin TSR[8] = 1'b1; end else begin TSR[8] = 1'b0; end
+
+                // Bottom half of vector
+                TSR[7] = TALUout[8]; // Carry
+                TSR[6] = TALUout[7]; // Negative
+                TSR[5] = ((TA[6] ~^ TB[6]) & TA[6]) ^ (TALUout[6] & (TA[6] ~^ TB[6])); // V Overflow
+                if (TALUout[8:0] == 8'd0) begin TSR[4] = 1'b1; end else begin TSR[4] = 1'b0; end
+
+                TALUH = {TALUout[15:9], TALUout[7:0]};
+            end
+
+
+            VDIV_IC: begin
+                TALUout[16:9] = TA[15:8] / TB[15:8];
+                TALUout[8:0]  = TA[7:0]  / TB[7:0];
+
+                // Top half of Vector
+                TSR[11] = TALUout[16]; // Carry
+                TSR[10] = TALUout[15]; // Negative
+                TSR[9] = ((TA[14] ~^ TB[14]) & TA[14]) ^ (TALUout[14] & (TA[14] ~^ TB[14])); // V Overflow
+                if (TALUout[16:9] == 8'd0) begin TSR[8] = 1'b1; end else begin TSR[8] = 1'b0; end
+
+                // Bottom half of vector
+                TSR[7] = TALUout[8]; // Carry
+                TSR[6] = TALUout[7]; // Negative
+                TSR[5] = ((TA[6] ~^ TB[6]) & TA[6]) ^ (TALUout[6] & (TA[6] ~^ TB[6])); // V Overflow
+                if (TALUout[8:0] == 8'd0) begin TSR[4] = 1'b1; end else begin TSR[4] = 1'b0; end
+
+                TALUH = {TALUout[15:9], TALUout[7:0]};
+            end
+
             MUL_IC: begin
                 TALUout = TA * TB;
                 TSR[11] = TALUout[16]; // Carry
@@ -656,6 +713,14 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
                     TSR[10] = TALUS[16]; // Negative
                     if (TALUH[15:0] == 16'h0000) TSR[8] = 1; else TSR[8] = 0; // Zero\
                 end //RRN_IC
+
+            RRC_IC:
+                begin
+                    TALUS = {TSR[11], TA, TSR[11], TA} >> TB;
+                    TALUH = TALUS[15:0];
+                    TSR[11] = TALUS[16]; // Negative
+                    if (TALUH[15:0] == 16'h0000) TSR[8] = 1; else TSR[8] = 0; // Zero\
+                end //RRN_IC
             RRZ_IC:
                 begin
                     TALUS = {TSR[8], TA, TSR[8], TA} >> TB;
@@ -691,7 +756,7 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
                 else if (Ri1 == 1) MAX = PC;
                 else if (Ri1 == 2) MAX = SP;
                 else begin
-                    if (Ri1 == Ri2) begin
+                    if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC)) begin
                         MAX = TALUH;
                     end
                     else begin MAX = R[Ri1]; end
@@ -744,7 +809,7 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
                 else OPDR = R[Ri1];
             end
             CPY_IC: begin
-                if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC)) begin
+                if ((Rj1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC) && (IR2[15:10] != LD_IC) && (IR2[15:10] != ST_IC) && (IR2[15:10] != JMP_IC)) begin
                     TB = TALUH; // <-- DF-FU = Data Forwarding from the instruction in MC2
                 end
                 else begin
@@ -752,7 +817,7 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
                 end
             end //CPY_IC
             NOT_IC, SRA_IC, RRC_IC, RRN_IC, RRZ_IC, SHRL_IC, ROTL_IC, RLN_IC, RLZ_IC, ROTR_IC: begin
-                if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC)) begin
+                if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC)  && (IR2[15:10] != LD_IC) && (IR2[15:10] != ST_IC) && (IR2[15:10] != JMP_IC)) begin
                     TA = TALUH; // <-- DF-FU = Data Forwarding from the instruction in MC2
                 end
                 else begin
@@ -761,7 +826,7 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
                 TB = Rj1;
             end // NOT_IC, SRA_IC, RRC_IC
             ADDC_IC, SUBC_IC: begin
-                if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC)) begin
+                if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC)  && (IR2[15:10] != LD_IC) && (IR2[15:10] != ST_IC)  && (IR2[15:10] != JMP_IC)) begin
                     TA = TALUH; // <-- DF-FU
                 end
                 else begin
@@ -780,9 +845,26 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
                 TB = {11'b0000000000, IR1[4:0]};
             end // ADDC_IC, SUBC_IC
 
-                // TODO: Fix this and make it work
-                //       draw it out and you will see the pattern
-                // if previous instruction is MUL DIV or SWAP
+            VMUL_IC, VDIV_IC: begin
+                // populate TA and TB with the proper registers
+                // Check for data forwarding issues in Ri
+                if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC) && (IR2[15:10] != JMP_IC) && (IR2[15:10] != LD_IC) && (IR2[15:10] != ST_IC)) begin
+                    TA = TALUH;
+                end
+                else begin
+                    TA = R[Ri1];
+                end
+
+                // Check for data forwarding issues in Rj
+                if ((Rj1 == Rj2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC) && (IR2[15:10] != LD_IC) && (IR2[15:10] != ST_IC) && (IR2[15:10] != JMP_IC) && (IR2[15:14] != 2'b01)) begin
+                    TB = TALUH;
+                end
+                else begin
+                    TB = R[Rj1];
+                end
+            end    
+            
+            // TODO: Check to make sure VADD and VSUB should be in here, get a hunch they shouldnt
             ADD_IC, SUB_IC, AND_IC, OR_IC, XOR_IC, VADD_IC, VSUB_IC: begin
                 if((IR2[15:10] == MUL_IC) || (IR2[15:10] == DIV_IC) || (IR2[15:10] == SWAP_IC)) begin
                     // if 
@@ -798,6 +880,7 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
                     else begin
                         TB = R[Rj1];
                     end
+
                     if (Ri1 == Rj2) begin
                         TA = TALUL;
                     end
@@ -813,10 +896,10 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
                 end
 
                 else begin
-                    if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC) && (IR2[15:10] != LD_IC) && (IR2[15:10] != ST_IC)) begin TA = TALUH; end
+                    if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC) && (IR2[15:10] != LD_IC) && (IR2[15:10] != ST_IC) && (IR2[15:10] != JMP_IC)) begin TA = TALUH; end
                     else begin TA = R[Ri1]; end
                     
-                    if ((Rj1 == Rj2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC)&& (IR2[15:10] != ADDC_IC)&& (IR2[15:10] != SUBC_IC) && (IR2[15:10] != LD_IC) && (IR2[15:10] != ST_IC)) begin TB = TALUH; end
+                    if ((Rj1 == Rj2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC) && (IR2[15:14] != 2'b01) && (IR2[15:10] != LD_IC) && (IR2[15:10] != ST_IC)) begin TB = TALUH; end
                     else begin TB = R[Rj1]; end
                 end
             end
@@ -831,13 +914,13 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
             SWAP_IC, MUL_IC, DIV_IC: begin
                 // DF-FU; Ri2 below is right for every previous instruction that returns a result in Ri2; 
                 // need to modify for a previous SWAP if the value is to be Rj2
-                if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC)) begin
+                if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC) && (IR2[15:10] != LD_IC) && (IR2[15:10] != ST_IC) && (IR2[15:10] != JMP_IC)) begin
                     TA = TALUH; 
                 end
                 else begin
                     TA = R[Ri1];
                 end
-                if ((Rj1 == Rj2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC)) begin
+                if ((Rj1 == Rj2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC) && (IR2[15:14] != 2'b01) && (IR2[15:10] != LD_IC) && (IR2[15:10] != ST_IC) && (IR2[15:10] != JMP_IC)) begin
                     TB = TALUH; 
                 end
                 else begin
