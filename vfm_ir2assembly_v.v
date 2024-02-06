@@ -152,6 +152,8 @@ always @ (*) begin
 			6'b111000 : ICis = {"NOP R", 	IR7to4, " R", IR3to0, ":"};
 			6'b001000 : ICis = {"FADD R", IR7to4, " R", IR3to0, ":"};
 			6'b001001 : ICis = {"FSUB R", IR7to4, " R", IR3to0, ":"};
+			6'b001010 : ICis = {"FMUL R", IR7to4, " R", IR3to0, ":"};
+			6'b001011 : ICis = {"FDIV R", IR7to4, " R", IR3to0, ":"};
 	default : ICis = {"NDEF"}; //NDEF
    endcase
 end

@@ -80,6 +80,8 @@ localparam [5:0] ST_IC   = 6'b000001 ; // Store
 // FP INSTRUCTIONS
 localparam [5:0] FPADD_IC = 6'b001000; // FPADD
 localparam [5:0] FPSUB_IC = 6'b001001; // FPADD
+localparam [5:0] FPMUL_IC = 6'b001010; // FPADD
+localparam [5:0] FPDIV_IC = 6'b001011; // FPADD
 
 
 
@@ -185,6 +187,11 @@ reg  [INSTR_WIDTH-1:0]          FPAdd_a           ;
 reg  [INSTR_WIDTH-1:0]          FPAdd_b           ;
 reg  [INSTR_WIDTH-1:0]          FPSub_a           ;
 reg  [INSTR_WIDTH-1:0]          FPSub_b           ;
+reg  [INSTR_WIDTH-1:0]          FPMul_a           ;
+reg  [INSTR_WIDTH-1:0]          FPMul_b           ;
+reg  [INSTR_WIDTH-1:0]          FPDiv_a           ;
+reg  [INSTR_WIDTH-1:0]          FPDiv_b           ;
+reg  [INSTR_WIDTH-1:0]          TFP           ;
 reg  [32:0]                     TALUout        ; // Temoprary Output of Arithmetic-Logic-Unit with carry
 reg  [INSTR_WIDTH-1:0]          TALUH          ; // Temporary Output of Arithmetic-Logic-Unit "High"
 reg  [INSTR_WIDTH-1:0]          TALUL          ; // Temporary Output of Arithmetic-Logic-Unit "Low"
@@ -203,6 +210,8 @@ wire [INSTR_WIDTH-1:0]          MM_out         ; // Output of monolithic memory
 wire [INSTR_WIDTH-1:0]          PM_out         ; // Output of monolithic memory 
 wire  [INSTR_WIDTH-1:0]          FPAdd_q           ;
 wire  [INSTR_WIDTH-1:0]          FPSub_q           ;
+wire  [INSTR_WIDTH-1:0]          FPMul_q           ;
+wire  [INSTR_WIDTH-1:0]          FPDiv_q           ;
 
 reg  [2*INSTR_WIDTH+1:0]        TALUS          ; // temporary alu shift reg for status shifting
 reg unsigned [INSTR_WIDTH-1:0]  SP        ;
@@ -214,6 +223,12 @@ reg [INSTR_WIDTH-1:0] OPDR;          // 16 14-bit output registers that are addr
 
 reg enable_add;
 reg enable_sub;
+reg enable_mul;
+reg enable_div;
+wire FPSUB_stall;
+wire FPADD_stall;
+wire FPMUL_stall;
+wire FPDIV_stall;
 //------------------------------------------------------------------------------------------------------------------------------------------
 // - In this architecture we are using a combination of structural and behavioral code.
 // - Care has to be excercised because the values assigned in the always block are visible outside of it only during the next clock cycle.
@@ -285,7 +300,8 @@ FPAddWrap_v FPAddWrap (
     .enable (enable_add),
     .A      (FPAdd_a),
     .B      (FPAdd_b),
-    .Q      (FPAdd_q)
+    .Q      (FPAdd_q),
+    .stall  (FPADD_stall)
 );
 
 FPSubWrap_v FPSubWrap (
@@ -294,7 +310,28 @@ FPSubWrap_v FPSubWrap (
     .enable (enable_sub),
     .A      (FPSub_a),
     .B      (FPSub_b),
-    .Q      (FPSub_q)
+    .Q      (FPSub_q),
+    .stall  (FPSUB_stall)
+);
+
+FPMultWrap_v FPMultWrap (
+    .clk    (Clock_pin),
+    .reset  (Resetn_pin),
+    .enable (enable_mul),
+    .A      (FPMul_a),
+    .B      (FPMul_b),
+    .Q      (FPMul_q),
+    .stall  (FPMUL_stall)
+);
+
+FPDivWrap_v FPDivWrap (
+    .clk    (Clock_pin),
+    .reset  (Resetn_pin),
+    .enable (enable_div),
+    .A      (FPDiv_a),
+    .B      (FPDiv_b),
+    .Q      (FPDiv_q),
+    .stall  (FPDIV_stall)
 );
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -316,6 +353,7 @@ if (Resetn_pin == 0) begin
     for (k = 2; k < 32; k = k+1) begin FPR[k] = 0; end
     FPR[0] = 16'b0100010000000000;
     FPR[1] = 16'b0100010100000000;
+    TFP = 0;
     MAB         = 16'd0;
     MAX         = 16'd0;
     MAeff       = 16'd0;
@@ -355,6 +393,8 @@ if (Resetn_pin == 0) begin
 
     enable_add = 1'b0;
     enable_sub = 1'b0;
+    enable_mul = 1'b0;
+    enable_div = 1'b0;
 
 
 
@@ -368,7 +408,7 @@ if (Resetn_pin == 0) begin
     stall_mc3   =  1'b1;
     WR_DM       =  1'b0;
 end // if (Resetn_pin == 0)
-else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
+else if (PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_stall && ~FPMUL_stall && ~FPDIV_stall) begin // Normal Operation
 //----------------------------------------------------------------------------
 // MACHINE CYCLE 3
 //----------------------------------------------------------------------------
@@ -443,13 +483,23 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
             end
 
             FPADD_IC: begin
-                FPR[IR3[9:5]] = FPAdd_q;
+                FPR[IR3[9:5]] = TFP;
                 enable_add = 1'b0;
             end
             
             FPSUB_IC: begin
-                FPR[IR3[9:5]] = FPSub_q;
+                FPR[IR3[9:5]] = TFP;
                 enable_sub = 1'b0;
+            end
+            
+            FPMUL_IC: begin
+                FPR[IR3[9:5]] = TFP;
+                enable_mul = 1'b0;
+            end
+            
+            FPDIV_IC: begin
+                FPR[IR3[9:5]] = TFP;
+                enable_div = 1'b0;
             end
 
             default: begin // Default case should not be reached0
@@ -788,7 +838,23 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
             end
 
             FPADD_IC: begin
+                TFP = FPAdd_q;
                 enable_add = 1'b0;
+            end
+
+            FPSUB_IC: begin
+                TFP = FPSub_q;
+                enable_sub = 1'b0;
+            end
+            
+            FPMUL_IC: begin
+                TFP = FPMul_q;
+                enable_mul = 1'b0;
+            end
+            
+            FPDIV_IC: begin
+                TFP = FPDiv_q;
+                enable_div = 1'b0;
             end
 
             default: begin // Default case should not be reached
@@ -994,14 +1060,102 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
 
             FPADD_IC: begin
                 enable_add = 1'b1;
-                FPAdd_a = FPR[Ri1];
-                FPAdd_b = FPR[Rj1];
+                if ((Ri1 == Ri2)) begin
+                    case(IR2[15:10])
+                        FPADD_IC: begin FPAdd_a = FPAdd_q; end
+                        FPSUB_IC: begin FPAdd_a = FPSub_q; end
+                        FPMUL_IC: begin FPAdd_a = FPMul_q; end
+                        FPDIV_IC: begin FPAdd_a = FPDiv_q; end
+                        default: begin FPAdd_a = FPR[Ri1]; end
+                    endcase
+                end
+                else begin FPAdd_a = FPR[Ri1]; end
+
+                if ((Rj1 == Ri2)) begin
+                    case(IR2[15:10])
+                        FPADD_IC: begin FPAdd_b = FPAdd_q; end
+                        FPSUB_IC: begin FPAdd_b = FPSub_q; end
+                        FPMUL_IC: begin FPAdd_b = FPMul_q; end
+                        FPDIV_IC: begin FPAdd_b = FPDiv_q; end
+                        default: begin FPAdd_b = FPR[Rj1]; end
+                    endcase
+                end
+                else begin FPAdd_b = FPR[Rj1]; end
             end
 
             FPSUB_IC: begin
                 enable_sub = 1'b1;
-                FPSub_a = FPR[Ri1];
-                FPSub_b = FPR[Rj1];
+                if ((Ri1 == Ri2)) begin
+                    case(IR2[15:10])
+                        FPADD_IC: begin FPSub_a = FPAdd_q; end
+                        FPSUB_IC: begin FPSub_a = FPSub_q; end
+                        FPMUL_IC: begin FPSub_a = FPMul_q; end
+                        FPDIV_IC: begin FPSub_a = FPDiv_q; end
+                        default: begin FPSub_a = FPR[Ri1]; end
+                    endcase
+                end
+                else begin FPSub_a = FPR[Ri1]; end
+
+                if ((Rj1 == Ri2)) begin
+                    case(IR2[15:10])
+                        FPADD_IC: begin FPSub_b = FPAdd_q; end
+                        FPSUB_IC: begin FPSub_b = FPSub_q; end
+                        FPMUL_IC: begin FPSub_b = FPMul_q; end
+                        FPDIV_IC: begin FPSub_b = FPDiv_q; end
+                        default: begin FPSub_b = FPR[Rj1]; end
+                    endcase
+                end
+                else begin FPSub_b = FPR[Rj1]; end
+            end
+            
+            FPMUL_IC: begin
+                enable_mul = 1'b1;
+                if ((Ri1 == Ri2)) begin
+                    case(IR2[15:10])
+                        FPADD_IC: begin FPMul_a = FPAdd_q; end
+                        FPSUB_IC: begin FPMul_a = FPSub_q; end
+                        FPMUL_IC: begin FPMul_a = FPMul_q; end
+                        FPDIV_IC: begin FPMul_a = FPDiv_q; end
+                        default: begin FPMul_a = FPR[Ri1]; end
+                    endcase
+                end
+                else begin FPMul_a = FPR[Ri1]; end
+
+                if ((Rj1 == Ri2)) begin
+                    case(IR2[15:10])
+                        FPADD_IC: begin FPMul_b = FPAdd_q; end
+                        FPSUB_IC: begin FPMul_b = FPSub_q; end
+                        FPMUL_IC: begin FPMul_b = FPMul_q; end
+                        FPDIV_IC: begin FPMul_b = FPDiv_q; end
+                        default: begin FPMul_b = FPR[Rj1]; end
+                    endcase
+                end
+                else begin FPMul_b = FPR[Rj1]; end
+            end
+            
+            FPDIV_IC: begin
+                enable_div = 1'b1;
+                if ((Ri1 == Ri2)) begin
+                    case(IR2[15:10])
+                        FPADD_IC: begin FPDiv_a = FPAdd_q; end
+                        FPSUB_IC: begin FPDiv_a = FPSub_q; end
+                        FPMUL_IC: begin FPDiv_a = FPMul_q; end
+                        FPDIV_IC: begin FPDiv_a = FPDiv_q; end
+                        default: begin FPDiv_a = FPR[Ri1]; end
+                    endcase
+                end
+                else begin FPDiv_a = FPR[Ri1]; end
+
+                if ((Rj1 == Ri2)) begin
+                    case(IR2[15:10])
+                        FPADD_IC: begin FPDiv_b = FPAdd_q; end
+                        FPSUB_IC: begin FPDiv_b = FPSub_q; end
+                        FPMUL_IC: begin FPDiv_b = FPMul_q; end
+                        FPDIV_IC: begin FPDiv_b = FPDiv_q; end
+                        default: begin FPDiv_b = FPR[Rj1]; end
+                    endcase
+                end
+                else begin FPDiv_b = FPR[Rj1]; end
             end
 
             default: begin // Default case should not be reached
