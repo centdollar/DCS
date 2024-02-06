@@ -77,6 +77,12 @@ parameter INSTR_WIDTH = 16;
 localparam [5:0] LD_IC   = 6'b000000 ; // Load
 localparam [5:0] ST_IC   = 6'b000001 ; // Store
 
+// FP INSTRUCTIONS
+localparam [5:0] FPADD_IC = 6'b001000; // FPADD
+localparam [5:0] FPSUB_IC = 6'b001001; // FPADD
+
+
+
 // REG REG INSTRUCTION TYPE
     // Peripheral Output
 localparam [5:0] IN_IC   = 6'b100000; // Peripheral input
@@ -158,6 +164,7 @@ localparam [5:0]  NOP_IC  = 6'b111000;
 //-- Declare internal signals
 //----------------------------------------------------------------------------
 reg  [INSTR_WIDTH-1:0]          R       [31:0] ; // Register File (RF) 64 16-bit registers
+reg  [INSTR_WIDTH-1:0]          FPR     [31:0] ;
 reg                             WR_DM          ; // Write-enable data-memory input
 reg                             stall_mc0      ; // Stall Control Bits
 reg                             stall_mc1      ; // Stall Control Bits
@@ -174,6 +181,10 @@ reg  [INSTR_WIDTH-1:0]          MAeff          ; // Memory Address Effective
 reg  [INSTR_WIDTH-1:0]          MM_in          ; // Data-Memory Input
 reg  [INSTR_WIDTH-1:0]          TA             ; // Temporary Input of Arithmetic-Logic-Unit "A"
 reg  [INSTR_WIDTH-1:0]          TB             ; // Temporary Input of Arithmetic-Logic-Unit "B"
+reg  [INSTR_WIDTH-1:0]          FPAdd_a           ;
+reg  [INSTR_WIDTH-1:0]          FPAdd_b           ;
+reg  [INSTR_WIDTH-1:0]          FPSub_a           ;
+reg  [INSTR_WIDTH-1:0]          FPSub_b           ;
 reg  [32:0]                     TALUout        ; // Temoprary Output of Arithmetic-Logic-Unit with carry
 reg  [INSTR_WIDTH-1:0]          TALUH          ; // Temporary Output of Arithmetic-Logic-Unit "High"
 reg  [INSTR_WIDTH-1:0]          TALUL          ; // Temporary Output of Arithmetic-Logic-Unit "Low"
@@ -190,6 +201,9 @@ wire                            PM_Cache_done     ;
 wire                            MM_Cache_done     ;
 wire [INSTR_WIDTH-1:0]          MM_out         ; // Output of monolithic memory 
 wire [INSTR_WIDTH-1:0]          PM_out         ; // Output of monolithic memory 
+wire  [INSTR_WIDTH-1:0]          FPAdd_q           ;
+wire  [INSTR_WIDTH-1:0]          FPSub_q           ;
+
 reg  [2*INSTR_WIDTH+1:0]        TALUS          ; // temporary alu shift reg for status shifting
 reg unsigned [INSTR_WIDTH-1:0]  SP        ;
 integer        k              ; // Index for looping construct
@@ -198,6 +212,8 @@ reg [INSTR_WIDTH-1:0] IPDR;          // 16 14-bit Input peripheral Data register
 
 reg [INSTR_WIDTH-1:0] OPDR;          // 16 14-bit output registers that are addressed by Rj in the in OUT_IC
 
+reg enable_add;
+reg enable_sub;
 //------------------------------------------------------------------------------------------------------------------------------------------
 // - In this architecture we are using a combination of structural and behavioral code.
 // - Care has to be excercised because the values assigned in the always block are visible outside of it only during the next clock cycle.
@@ -219,6 +235,9 @@ not clock_inverter ( Clock_not, Clock_pin ); // Using a language primative so ti
 //     // assign 
 // 	Input_Ps = {10'd0, SW_pin[3:0]};
 // end
+
+
+
 
 
 `ifdef NOCACHE
@@ -260,6 +279,24 @@ vfm_cache_4w_v2 MM (
 
 `endif
 
+FPAddWrap_v FPAddWrap (
+    .clk    (Clock_pin),
+    .reset  (Resetn_pin),
+    .enable (enable_add),
+    .A      (FPAdd_a),
+    .B      (FPAdd_b),
+    .Q      (FPAdd_q)
+);
+
+FPSubWrap_v FPSubWrap (
+    .clk    (Clock_pin),
+    .reset  (Resetn_pin),
+    .enable (enable_sub),
+    .A      (FPSub_a),
+    .B      (FPSub_b),
+    .Q      (FPSub_q)
+);
+
 //------------------------------------------------------------------------------------------------------------------------------------------
 // - Behavioral section of the code.  Assignments are evaluated in order, i.e. sequentially.
 // - New assigned values are visible outside the always block only after it is exit.
@@ -276,6 +313,9 @@ if (Resetn_pin == 0) begin
     // - Initialize registers.
     PC = 16'h0000; // Initialize the PC to point to the location of the FIRST instruction to be executed; location 0000 is arbitrary!
     for (k = 0; k < 32; k = k+1) begin R[k] = 0; end
+    for (k = 2; k < 32; k = k+1) begin FPR[k] = 0; end
+    FPR[0] = 16'b0100010000000000;
+    FPR[1] = 16'b0100010100000000;
     MAB         = 16'd0;
     MAX         = 16'd0;
     MAeff       = 16'd0;
@@ -312,6 +352,9 @@ if (Resetn_pin == 0) begin
     Out13        = 16'd0;
     Out14        = 16'd0;
     Out15        = 16'd0;
+
+    enable_add = 1'b0;
+    enable_sub = 1'b0;
 
 
 
@@ -398,6 +441,17 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
             NOP_IC: begin
                 PC = PC + 1'b0;
             end
+
+            FPADD_IC: begin
+                FPR[IR3[9:5]] = FPAdd_q;
+                enable_add = 1'b0;
+            end
+            
+            FPSUB_IC: begin
+                FPR[IR3[9:5]] = FPSub_q;
+                enable_sub = 1'b0;
+            end
+
             default: begin // Default case should not be reached0
                 `ifdef SIMULATION
                 $display("ERROR: Default Case Selection Reached from MC3 , OPCODE: %b @ %t",IR3[INSTR_WIDTH-1:10], $time());
@@ -732,6 +786,11 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
             NOP_IC: begin
                 PC = PC + 1'b0;
             end
+
+            FPADD_IC: begin
+                enable_add = 1'b0;
+            end
+
             default: begin // Default case should not be reached
                 `ifdef SIMULATION
                 $display("ERROR: Default Case Selection Reached from MC2 , OPCODE: %b @ %t",IR2[15:10], $time());
@@ -931,6 +990,18 @@ else if (PM_Cache_done && MM_Cache_done) begin // Normal Operation
 
             NOP_IC: begin
                 PC = PC + 1'b0;
+            end
+
+            FPADD_IC: begin
+                enable_add = 1'b1;
+                FPAdd_a = FPR[Ri1];
+                FPAdd_b = FPR[Rj1];
+            end
+
+            FPSUB_IC: begin
+                enable_sub = 1'b1;
+                FPSub_a = FPR[Ri1];
+                FPSub_b = FPR[Rj1];
             end
 
             default: begin // Default case should not be reached
