@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simPackage>
+ <file
+   path="FPDiv_sim/FPDiv_memoryC0_uid112_invTables_lutmem.hex"
+   type="HEX" />
+ <file
+   path="FPDiv_sim/FPDiv_memoryC1_uid115_invTables_lutmem.hex"
+   type="HEX" />
+ <file path="FPDiv_sim/FPDiv.vo" type="VERILOG" />
+ <topLevel name="FPDiv" />
+ <deviceFamily name="cycloneive" />
+</simPackage>
