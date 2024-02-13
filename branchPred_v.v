@@ -83,6 +83,22 @@ else if(enable) begin
         FOUND: begin
             case (jumpType)
                 // JC1: begin if (statusBits[11] == 1) begin
+                JC1: begin 
+                    if (statusBits[11]  == 1) begin
+                        if(predictStates[targetIndex] == w_taken) predictStates[targetIndex] = s_taken;  
+                        if(predictStates[targetIndex] == s_taken) predictStates[targetIndex] = s_taken;  
+                        if(predictStates[targetIndex] == w_ntaken) predictStates[targetIndex] = w_taken;  
+                        if(predictStates[targetIndex] == s_ntaken) predictStates[targetIndex] = w_ntaken;  
+                        pred_correct = 1'b1;
+                    end    
+                    else begin 
+                        if(predictStates[targetIndex] == w_taken) predictStates[targetIndex] = w_ntaken;  
+                        if(predictStates[targetIndex] == s_taken) predictStates[targetIndex] = w_taken;  
+                        if(predictStates[targetIndex] == w_ntaken) predictStates[targetIndex] = s_ntaken;  
+                        if(predictStates[targetIndex] == s_ntaken) predictStates[targetIndex] = s_ntaken;  
+                        pred_correct = 1'b0;
+                    end
+                end
                      
                 // end
                 // else PC = PC; end
@@ -215,16 +231,128 @@ else if(enable) begin
 
             case (jumpType)
                 // JC1: begin if (statusBits[11] == 1) begin
+                JC1: begin 
+                    if (statusBits[8]  == 1) begin
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        pred_correct = 1'b1;
+                    end    
+                    else begin 
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        pred_correct = 1'b0;
+                    end
+                end
                      
                 // end
                 // else PC = PC; end
 
                 // JN1: begin if (statusBits[10] == 1) PC = MAeff; else PC = PC; end
+                JN1: begin 
+                    if (statusBits[8]  == 1) begin
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        pred_correct = 1'b1;
+                    end    
+                    else begin 
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        pred_correct = 1'b0;
+                    end
+                end
                 // JV1: begin if (statusBits[9]  == 1) PC = MAeff; else PC = PC; end
+                JV1: begin 
+                    if (statusBits[8]  == 1) begin
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        pred_correct = 1'b1;
+                    end    
+                    else begin 
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        pred_correct = 1'b0;
+                    end
+                end
                 // JZ1: begin if (statusBits[8]  == 1) PC = MAeff; else PC = PC; end
+                JZ1: begin 
+                    if (statusBits[8]  == 1) begin
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        pred_correct = 1'b1;
+                    end    
+                    else begin 
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        pred_correct = 1'b0;
+                    end
+                end
                 // JC0: begin if (statusBits[11] == 0) PC = MAeff; else PC = PC; end
+                JC0: begin 
+                    if (statusBits[8]  == 0) begin
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        pred_correct = 1'b1;
+                    end    
+                    else begin 
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        pred_correct = 1'b0;
+                    end
+                end
                 // JN0: begin if (statusBits[10] == 0) PC = MAeff; else PC = PC; end
+                JN0: begin 
+                    if (statusBits[8]  == 0) begin
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        pred_correct = 1'b1;
+                    end    
+                    else begin 
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        pred_correct = 1'b0;
+                    end
+                end
                 // JV0: begin if (statusBits[9]  == 0) PC = MAeff; else PC = PC; end
+                JV0: begin 
+                    if (statusBits[8]  == 0) begin
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        pred_correct = 1'b1;
+                    end    
+                    else begin 
+                        if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = w_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = w_taken;  
+                        if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        if(predictStates[targetWriteIndex - 1] == s_ntaken) predictStates[targetWriteIndex - 1] = s_ntaken;  
+                        pred_correct = 1'b0;
+                    end
+                end
                 JZ0: begin 
                     if (statusBits[8]  == 0) begin
                         if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
