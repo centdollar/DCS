@@ -1,0 +1,123 @@
+`timescale 1ps/1ps
+
+module branchPred_v (
+    input clk,
+    input resetn,
+    input [7:0] address,
+    input [3:0] jumpType,
+    input enable,
+    output reg jumpTaken        // 0: not taken        1: taken
+
+);
+
+integer k;
+
+reg [1:0] addrState [7:0];
+wire [2**3-1   : 0] set_hit                  ; // set pointed to by CAM hit
+
+wire [7:0] CAM_Out;
+
+reg cam_wr;
+reg [2:0] CAMWriteAddr;
+reg [2:0] addr_replace;
+wire [2:0] addr_control;
+reg [2:0] dirty_bit;
+wire CAM_hit;
+
+reg [1:0] BP_State;
+reg [1:0] Store_state;
+
+localparam [1:0] IDLE = 2'b00;
+localparam [1:0] STORE = 2'b01;
+localparam [1:0] STORE0 = 2'b00;
+localparam [1:0] STORE1 = 2'b01;
+
+
+assign addr_control = addr_replace;
+
+
+vfm_CAM_v2 
+#(
+    .addr_width    ( 3 ),
+    .data_width    ( 8 ) 
+) addr_mem (
+    .Clock         ( clk                   ), // input  // Used for syncronous write
+    .Resetn        ( resetn                  ), // input  // Syncronous reset
+    .WR            ( cam_wr                  ), // input  // Write-Enable
+    .Write_Addr    ( CAMWriteAddr), // input  // "{Set,Group}" to write incoming "TAG" to
+    .Data_In       ( state                     ), // input  // "TAG" to check for stored in CAM
+    .Hit           ( CAM_hit            ), // output // Was "TAG" found in CAM? Not useful since we need group association
+    .CAM_Out       ( CAM_Out                 ), // output // "{Set,Group}" where tag was found -> encoded in white hot
+    .ADDR_Out      ( tag_replace             )  // output // "TAG" stored at "{Set,Group}"
+);
+
+
+
+
+// // Now check to see if jump target address was found in CAM at group, and if so where
+// generate // Using a generate block to create a priority encoder, which will produce a binary from a 1-hot
+//     for (j=0; j<(2**set_addr_width); j=j+1) begin : set_hit_seperate
+//         assign set_hit[j]         = (CAM_Out[{j[-1:0]}]) ; // This line generates a warning in quartus which is invalid, due to masking off of MSBs for small values of "j"
+//     end
+//     assign set_hit_search [0] = {set_addr_width{1'd0}};
+//     for (j=1; j<(2**set_addr_width); j=j+1) begin : set_hit_encoder
+//         assign set_hit_search [j] = (set_hit[j]) ? j[set_addr_width-1:0] : set_hit_search[j-1] ;
+//     end
+//     assign set_hit_encoded = set_hit_search[2**set_addr_width-1];
+// endgenerate
+
+
+
+
+always @(posedge clk) begin
+if (~resetn) begin
+    // Reset LUT
+    for (k = 0; k < 8; k = k + 1) begin addrState[k] = 2'd0; end
+    jumpTaken = 1'b0;
+    cam_wr = 1'b0;
+    
+    case(BP_State)
+        IDLE: begin
+            jumpTaken = 1'b0;
+            cam_wr = 1'b0;
+            if(!cam_hit) begin
+                if(dirty_bit[addr_control])
+
+                end
+                else begin
+                    BP_State = STORE;
+                end
+            end
+
+        STORE: begin
+            case(Store_state)
+                STORE0: begin
+                    cam_wr = 1'b1;
+
+                end
+                STORE1: begin
+                    cam_wr = 1'b0;
+                    BP_State = IDLE;
+                    Store_state = STORE0;
+                end
+
+            endcase
+        end
+        
+        default: begin 
+            jumpTaken = 1'b0;
+            cam_wr = 1'b0;
+        end
+
+    endcase
+end
+else begin
+
+end
+
+
+end
+
+
+
+endmodule

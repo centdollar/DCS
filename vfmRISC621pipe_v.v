@@ -166,6 +166,7 @@ localparam [5:0]  NOP_IC  = 6'b111000;
 //-- Declare internal signals
 //----------------------------------------------------------------------------
 reg  [INSTR_WIDTH-1:0]          R       [31:0] ; // Register File (RF) 64 16-bit registers
+reg  [INSTR_WIDTH-1:0]          branchingRFClone       [31:0] ; // Register File (RF) 64 16-bit registers
 reg  [INSTR_WIDTH-1:0]          FPR     [31:0] ;
 reg                             WR_DM          ; // Write-enable data-memory input
 reg                             stall_mc0      ; // Stall Control Bits
@@ -221,6 +222,16 @@ reg [INSTR_WIDTH-1:0] IPDR;          // 16 14-bit Input peripheral Data register
 
 reg [INSTR_WIDTH-1:0] OPDR;          // 16 14-bit output registers that are addressed by Rj in the in OUT_IC
 
+reg BP_en;
+reg [7:0] BPAddr;
+reg [4:0] BPJumpType;
+reg [15:0] TPC;
+wire jumpTaken;
+
+wire stall_pipe;
+wire pred_correct;
+
+
 reg enable_add;
 reg enable_sub;
 reg enable_mul;
@@ -252,7 +263,17 @@ not clock_inverter ( Clock_not, Clock_pin ); // Using a language primative so ti
 // end
 
 
-
+branchPred_v BP (
+    .clk(Clock_pin),
+    .resetn(Resetn_pin),
+    .address(BPAddr),
+    .jumpType(BPJumpType),
+    .statusBits(TSR),
+    .currPC(TPC),
+    .enable(BP_en && stall_pipe),
+    .jumpTaken(jumpTaken),
+    .pred_correct(pred_correct)
+);
 
 
 `ifdef NOCACHE
@@ -334,6 +355,10 @@ FPDivWrap_v FPDivWrap (
     .stall  (FPDIV_stall)
 );
 
+
+
+assign stall_pipe = PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_stall && ~FPMUL_stall && ~FPDIV_stall;
+
 //------------------------------------------------------------------------------------------------------------------------------------------
 // - Behavioral section of the code.  Assignments are evaluated in order, i.e. sequentially.
 // - New assigned values are visible outside the always block only after it is exit.
@@ -396,19 +421,24 @@ if (Resetn_pin == 0) begin
     enable_mul = 1'b0;
     enable_div = 1'b0;
 
+    BP_en = 1'b0;
+    BPAddr = 8'd0;
+    BPJumpType = 5'd0;
+
 
 
     // Display_pin =  8'd0;
     IR1         = 16'hffff; // All IRs are initialized to the "don't care OpCode value 0xffff
     IR2         = 16'hffff;
     IR3         = 16'hffff;
+    IR4         = 16'hffff;
     stall_mc0   =  1'b0; // The initialization of the stall_mc signals is necessary for the correct startup of the pipeline.
     stall_mc1   =  1'b1;
     stall_mc2   =  1'b1;
     stall_mc3   =  1'b1;
     WR_DM       =  1'b0;
 end // if (Resetn_pin == 0)
-else if (PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_stall && ~FPMUL_stall && ~FPDIV_stall) begin // Normal Operation
+else if (stall_pipe) begin // Normal Operation
 //----------------------------------------------------------------------------
 // MACHINE CYCLE 3
 //----------------------------------------------------------------------------
@@ -451,18 +481,19 @@ else if (PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_stall && ~FPMU
                     R[IR3[4:0]] = TALUH;
             end // SWAP_IC
             JMP_IC: begin
-                case (IR3[4:0])
-                    JU : begin PC = MAeff; end
-                    JC1: begin if (SR[11] == 1) PC = MAeff; else PC = PC; end
-                    JN1: begin if (SR[10] == 1) PC = MAeff; else PC = PC; end
-                    JV1: begin if (SR[9]  == 1) PC = MAeff; else PC = PC; end
-                    JZ1: begin if (SR[8]  == 1) PC = MAeff; else PC = PC; end
-                    JC0: begin if (SR[11] == 0) PC = MAeff; else PC = PC; end
-                    JN0: begin if (SR[10] == 0) PC = MAeff; else PC = PC; end
-                    JV0: begin if (SR[9]  == 0) PC = MAeff; else PC = PC; end
-                    JZ0: begin if (SR[8]  == 0) PC = MAeff; else PC = PC; end
-                    default: PC = PC;
-                endcase
+                BP_en = 1'b0;
+                // case (IR3[4:0])
+                //     JU : begin PC = MAeff; end
+                //     JC1: begin if (SR[11] == 1) PC = MAeff; else PC = PC; end
+                //     JN1: begin if (SR[10] == 1) PC = MAeff; else PC = PC; end
+                //     JV1: begin if (SR[9]  == 1) PC = MAeff; else PC = PC; end
+                //     JZ1: begin if (SR[8]  == 1) PC = MAeff; else PC = PC; end
+                //     JC0: begin if (SR[11] == 0) PC = MAeff; else PC = PC; end
+                //     JN0: begin if (SR[10] == 0) PC = MAeff; else PC = PC; end
+                //     JV0: begin if (SR[9]  == 0) PC = MAeff; else PC = PC; end
+                //     JZ0: begin if (SR[8]  == 0) PC = MAeff; else PC = PC; end
+                //     default: PC = PC;
+                // endcase
             end // JMP_IC
             ADD_IC, SUB_IC, ADDC_IC, SUBC_IC, VADD_IC, VSUB_IC, VADDC_IC, VSUBC_IC, NOT_IC, AND_IC, OR_IC, XOR_IC, ROTL_IC, ROTR_IC, SHRL_IC, SRA_IC, RLN_IC, RLZ_IC, RRN_IC, RRC_IC, RRZ_IC, VMUL_IC, VDIV_IC : begin
                 R[IR3[9:5]] = TALUH;
@@ -517,6 +548,15 @@ else if (PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_stall && ~FPMU
             LD_IC, JMP_IC: begin
                 MAeff = MAB + MAX; // Address Arithmetic to calculate the effective address
                 WR_DM = 1'b0; // For LD_IC we ensure here that WR_DM=0.
+                if(IR2[15:10] == JMP_IC) begin
+                    BP_en = 1'b0;
+                    if(jumpTaken) begin
+                        PC = MAeff;
+                    end
+                    else begin 
+                        PC = TPC;
+                    end
+                end
             end // LD_IC, JMP_IC
             ST_IC: begin
                 MAeff = MAB + MAX;
@@ -870,6 +910,8 @@ else if (PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_stall && ~FPMU
     if ((stall_mc1 == 0) && (IR1 != 16'hffff)) begin // MC1, or Operand Fetch for manip inst, or Address_Fetch for transfer and flow control inst
         case (IR1[INSTR_WIDTH-1:10]) // Decode the OpCode of the IW
             LD_IC, ST_IC, JMP_IC: begin
+                
+
                 // MAeff = PC;
                 MAB = PM_out; // Load MAB with base address constant value embedded in IW-field; the value 0 emulates the Register Direct AM
                 PC = PC + 1'b1;// Increment the PC to point to the location of the next IW
@@ -885,6 +927,15 @@ else if (PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_stall && ~FPMU
                         MAX = TALUH;
                     end
                     else begin MAX = R[Ri1]; end
+                end
+                // Branch Prediction stuff for JMP_IC
+                if (IR1[INSTR_WIDTH-1:10] == JMP_IC) begin
+                    for (k = 0; k < 32; k = k + 1) begin branchingRFClone[k] = R[k]; end
+                    BPAddr = MAB[7:0] + MAX[7:0];
+                    BPJumpType = IR1[4:0];
+                    BP_en = 1'b1;
+                    TPC = PC;
+
                 end
             end //LD_IC, ST_IC, JMP_IC
             CALL_IC: begin
@@ -1177,17 +1228,24 @@ else if (PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_stall && ~FPMU
     // Below: Rj3 = Ri3 because the previous instruction returns a result in Ri2; 
     //        need to modify for a previous SWAP
 
+
     if (stall_mc3 == 0) begin
         IR4 = IR3;
     end
 
 
-    if ((stall_mc2 == 0) && 
-        (IR3[INSTR_WIDTH-1:10] != JMP_IC)  /* && 
+    if ((stall_mc2 == 0) /*&& 
+        (IR3[INSTR_WIDTH-1:10] != JMP_IC)  && 
         (IR3[INSTR_WIDTH-1:10] != LD_IC)    && 
         (IR3[INSTR_WIDTH-1:10] != ST_IC)    && 
         (IR3[INSTR_WIDTH-1:10] != CALL_IC)  && 
         (IR3[INSTR_WIDTH-1:10] != RET_IC)*/) begin 
+
+
+        // if(IR2[15:10] == JMP_IC && jumpTaken) begin
+        //     PC = MAB + MAX;
+        // end
+
         IR3 = IR2;
         Ri3 = Ri2;
         Rj3 = Rj2;
@@ -1200,11 +1258,14 @@ else if (PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_stall && ~FPMU
     end 
     // Instruction in MC1 can move to MC2; Rj2 may need to be = Ri1 for certain instruction sequences
     if ((stall_mc1 == 0) && 
-        (IR2[INSTR_WIDTH-1:10] != JMP_IC)   && 
+        /*(IR2[INSTR_WIDTH-1:10] != JMP_IC)   && */
         (IR2[INSTR_WIDTH-1:10] != LD_IC)    && 
         (IR2[INSTR_WIDTH-1:10] != ST_IC)    && 
         (IR2[INSTR_WIDTH-1:10] != CALL_IC)  && 
         (IR2[INSTR_WIDTH-1:10] != RET_IC)) begin 
+
+        
+
         IR2 = IR1;
         Ri2 = Ri1;
         Rj2 = Rj1;
@@ -1215,19 +1276,27 @@ else if (PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_stall && ~FPMU
         stall_mc1 = 1;
         IR2 = 16'hffff;
     end 
+
+
+    // if(~pred_correct && IR4[15:10] == JMP_IC) begin
+    // end
+
+
     // Instruction in MC0 can move to MC1;     
     if ((stall_mc0 == 0)        && 
-        (IR1[INSTR_WIDTH-1:10] != JMP_IC)   && 
+        (IR1[INSTR_WIDTH-1:10] != JMP_IC)   &&  
         (IR1[INSTR_WIDTH-1:10] != LD_IC)    && 
         (IR1[INSTR_WIDTH-1:10] != ST_IC)    && 
         (IR1[INSTR_WIDTH-1:10] != CALL_IC)  && 
         (IR1[INSTR_WIDTH-1:10] != RET_IC)) begin
+        
         // Below: IW0 is fetched directly into IR1, Ri1, and Rj1
        
         IR1 = PM_out; 
         Ri1 = PM_out[9:5];
         Rj1 = PM_out[4:0]; 
         PC = PC + 1'b1; 
+        if(IR1[15:10] == JMP_IC) begin BP_en = 1'b1; end
         // MAeff = PC;
         stall_mc1 = 0; 
     end
@@ -1251,7 +1320,7 @@ else if (PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_stall && ~FPMU
     if (/*(IR3 == 14'h3fff) || */
         (IR3[INSTR_WIDTH-1:10] == LD_IC)    || 
         (IR3[INSTR_WIDTH-1:10] == ST_IC)    || 
-        (IR4[INSTR_WIDTH-1:10] == JMP_IC)   || 
+        (IR3[INSTR_WIDTH-1:10] == JMP_IC)   || 
         (IR4[INSTR_WIDTH-1:10] == CALL_IC)  || 
         (IR4[INSTR_WIDTH-1:10] == RET_IC)) begin
         stall_mc0 = 0; 
@@ -1263,6 +1332,20 @@ else if (PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_stall && ~FPMU
         // Ri3 = 4'd0;
         // Rj3 = 4'd0;
     end
+
+    if (IR4[15:10] == JMP_IC && ~pred_correct) begin
+        PC = TPC;
+        BP_en = 1'b0; 
+        // stall_mc3 = 1'b1;
+        // stall_mc2 = 1'b1;
+        // stall_mc1 = 1'b1;
+        IR1 = 16'hffff;
+        Ri1 = 5'b11111;
+        Rj1 = 5'b11111;
+        for(k = 0; k < 32; k = k + 1) begin R[k] = branchingRFClone[k]; end
+
+    end
+
 
 //---------------------------------------------------------------------------
 // STALL FOR MEMORY TO BE DONE
