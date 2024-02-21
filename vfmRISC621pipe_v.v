@@ -545,13 +545,17 @@ else if (stall_pipe) begin // Normal Operation
 //----------------------------------------------------------------------------
     if ((stall_mc2 == 0) && (IR2 != 16'hFFFF)) begin
         case (IR2[15:10]) // Decode the OpCode of the IW
-            LD_IC, JMP_IC: begin
+            LD_IC: begin
                 MAeff = MAB + MAX; // Address Arithmetic to calculate the effective address
+                WR_DM = 1'b0; // For LD_IC we ensure here that WR_DM=0.
+            end
+            
+            JMP_IC: begin
                 WR_DM = 1'b0; // For LD_IC we ensure here that WR_DM=0.
                 if(IR2[15:10] == JMP_IC) begin
                     BP_en = 1'b0;
                     if(jumpTaken) begin
-                        PC = MAeff;
+                        PC = MAB + MAX + 1'b1;
                     end
                     else begin 
                         PC = TPC;
@@ -909,9 +913,7 @@ else if (stall_pipe) begin // Normal Operation
 //----------------------------------------------------------------------------
     if ((stall_mc1 == 0) && (IR1 != 16'hffff)) begin // MC1, or Operand Fetch for manip inst, or Address_Fetch for transfer and flow control inst
         case (IR1[INSTR_WIDTH-1:10]) // Decode the OpCode of the IW
-            LD_IC, ST_IC, JMP_IC: begin
-                
-
+            LD_IC, ST_IC: begin
                 // MAeff = PC;
                 MAB = PM_out; // Load MAB with base address constant value embedded in IW-field; the value 0 emulates the Register Direct AM
                 PC = PC + 1'b1;// Increment the PC to point to the location of the next IW
@@ -928,15 +930,34 @@ else if (stall_pipe) begin // Normal Operation
                     end
                     else begin MAX = R[Ri1]; end
                 end
-                // Branch Prediction stuff for JMP_IC
-                if (IR1[INSTR_WIDTH-1:10] == JMP_IC) begin
-                    for (k = 0; k < 32; k = k + 1) begin branchingRFClone[k] = R[k]; end
-                    BPAddr = MAB[7:0] + MAX[7:0];
-                    BPJumpType = IR1[4:0];
-                    BP_en = 1'b1;
-                    TPC = PC;
+            end //LD_IC, ST_IC
+            
+            JMP_IC: begin
+                
 
+                // MAeff = PC;
+                MAB = PM_out; // Load MAB with base address constant value embedded in IW-field; the value 0 emulates the Register Direct AM
+                // PC = PC + 1'b1;// Increment the PC to point to the location of the next IW
+                // stall_mc0 = 1;
+                if (Ri1 == 0) begin
+                    MAX = 0; 
                 end
+                // TODO: double check that this data forward should be here or with the MAX = R[Ri1] at the else at the end
+                else if (Ri1 == 1) MAX = PC;
+                else if (Ri1 == 2) MAX = SP;
+                else begin
+                    if ((Ri1 == Ri2) && (IR2 != 16'hFFFF) && (IR2[15:10] != NOP_IC)) begin
+                        MAX = TALUH;
+                    end
+                    else begin MAX = R[Ri1]; end
+                end
+                // Branch Prediction stuff for JMP_IC
+                for (k = 0; k < 32; k = k + 1) begin branchingRFClone[k] = R[k]; end
+                BPAddr = MAB[7:0] + MAX[7:0];
+                BPJumpType = IR1[4:0];
+                BP_en = 1'b1;
+                TPC = PC + 1'b1;
+
             end //LD_IC, ST_IC, JMP_IC
             CALL_IC: begin
                 PC = PC + 1'b1;
