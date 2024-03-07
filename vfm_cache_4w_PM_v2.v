@@ -88,7 +88,6 @@ reg                                              writeback                      
 reg                                              fetch                                 ; // control signal for multiplexors from fsm
 reg                                              cam_wr                                ; // CAM write enable
 reg                                              prefetch;
-reg [address_width-1 : 3]                        pre_fetch_block_addr;
 reg [address_width-1 : 0]                        fetching_address;
 reg [address_width-1 : 0]                        prefetch_address;
 
@@ -178,7 +177,6 @@ always @(posedge Clock) begin : Cache_Controller
             IDLE: begin
                 fetch       = 1'd0;
                 writeback   = 1'd0;
-                pre_fetch_block_addr = MEM_address[address_width - 1:3];
                 cm_word_cnt          = {word_addr_width{1'd0}};
                 mm_word_cnt          = {word_addr_width{1'd0}};
                 requested_word       = {word_addr_width{1'd0}};
