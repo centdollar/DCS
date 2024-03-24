@@ -53,6 +53,8 @@ vfm_pll my_pll(
 `ifdef SINGLECORE
 
 
+wire [16:0] interrupt_input;
+
 `ifdef NOCACHE
 defparam core0.PM.altsyncram_component.init_file = "test16.mif";
 // defparam dut.core0.MM.altsyncram_component.init_file = "dcs_lab11_part3.mif";
@@ -81,7 +83,8 @@ vfmRISC621pipe_v core0(
     .In12              (16'd0),
     .In13              (16'd0),
     .In14              (16'd0),
-    .In15              (16'd0),
+    // Interrupt will be implemented as a keyboard char being sent to input 15
+    .In15              (interrupt_input),
 
     .Out0               (display_out),
     .Out1               (),

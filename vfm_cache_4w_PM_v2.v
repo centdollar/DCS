@@ -39,18 +39,23 @@ genvar  j; // Used in "generate for" loops -> unrolled guarenteed by synthesis t
 localparam set_addr_width = 2; // 2 bit for 4-way set associativity (2^2 = 4)
 
 // Machine Main States
-localparam IDLE       = 2'd0 ; // Expected state for "HIT"
-localparam FETCH      = 2'd1 ; // Fetch new block
-localparam WRITEBACK  = 2'd2 ; // Write back dirty block
+localparam IDLE             = 2'd0 ; // Expected state for "HIT"
+localparam FETCH            = 2'd1 ; // Fetch new block
+localparam WRITEBACK        = 2'd2 ; // Write back dirty block
+localparam PREFETCH         = 2'd3 ; // Fetch new block
 // Machine Sub States
-localparam FETCH0     = 2'd0 ;
-localparam FETCH1     = 2'd1 ;
-localparam FETCH2     = 2'd2 ;
-localparam FETCH3     = 2'd3 ;
-localparam WRITEBACK0 = 2'd0 ;
-localparam WRITEBACK1 = 2'd1 ;
-localparam WRITEBACK2 = 2'd2 ;
-localparam WRITEBACK3 = 2'd3 ;
+localparam FETCH0           = 2'd0 ;
+localparam FETCH1           = 2'd1 ;
+localparam FETCH2           = 2'd2 ;
+localparam FETCH3           = 2'd3 ;
+localparam WRITEBACK0       = 2'd0 ;
+localparam WRITEBACK1       = 2'd1 ;
+localparam WRITEBACK2       = 2'd2 ;
+localparam WRITEBACK3       = 2'd3 ;
+localparam PREFETCH0        = 2'd0 ;
+localparam PREFETCH1        = 2'd1 ;
+localparam PREFETCH2        = 2'd2 ;
+localparam PREFETCH3        = 2'd3 ;
 
 // Internal Wires
 wire cam_hit;
@@ -72,14 +77,19 @@ wire                             cache_wren               ; // cache mem inst wr
 // State Machine Controlled Signals
 reg [1:0]                                        Cache_Controller_State                ;
 reg [1:0]                                        Fetch_State                           ;
+reg [1:0]                                        Pre_Fetch_State                           ;
 reg [1:0]                                        Writeback_State                       ;
 reg [word_addr_width-1     : 0]                  mm_word_cnt                           ; // used to iterate across words in a block for the main mem
+reg [word_addr_width-1     : 0]                  requested_word                        ; // used to iterate across words in a block for the main mem
 reg [word_addr_width-1     : 0]                  cm_word_cnt                           ; // used to iterate across words in a block for the cache
 reg [set_addr_width-1      : 0]                  set_replace [2**group_addr_width-1:0] ; // Set to replace -> need to keep track of this for each group
 reg [2**(group_addr_width+set_addr_width)-1 : 0] dirty_bit                             ; // used to track when a block in the cache is written to
 reg                                              writeback                             ; // control signal for multiplexors from fsm
 reg                                              fetch                                 ; // control signal for multiplexors from fsm
 reg                                              cam_wr                                ; // CAM write enable
+reg                                              prefetch;
+reg [address_width-1 : 0]                        fetching_address;
+reg [address_width-1 : 0]                        prefetch_address;
 
 // A "Content Addressable Memory" is used to store the TAG of the blocks stored in the cache
     // Remember, the tags are stored at the group that aligns with the stored block
@@ -111,7 +121,7 @@ generate // Using a generate block to create a priority encoder, which will prod
 endgenerate
 
 assign cam_hit          = |set_hit                ;
-assign {tag,group,word} = MEM_address             ;
+assign {tag,group,word} = (fetch || Cache_Controller_State == 2'b11) ? ((Cache_Controller_State == 2'b11) ? prefetch_address : fetching_address) : MEM_address              ;
 assign set_control      = set_replace[group]      ;
 
 // "Main Memory" implemented as a RAM
@@ -132,11 +142,13 @@ vfm_cache_v cache_mem (
 
 // Cache Mem Signal Multiplexing
 assign cache_address = (~fetch & ~writeback & cam_hit) ? {set_hit_encoded,group,word} : {set_control,group,cm_word_cnt} ;
+//assign cache_address = (~fetch & ~writeback & cam_hit) ? {set_hit_encoded,group,word} : {fetching_address[address_width - 1:3],cm_word_cnt} ;
 assign cache_data    = (~fetch & ~writeback & cam_hit) ? main_q            : main_q                          ;
 assign cache_wren    = (~fetch & ~writeback & cam_hit) ? fetch                     : fetch                           ;
 
 // Main Mem Signal Multiplexing
 assign main_address  = (cam_wr) ? {tag,group,mm_word_cnt} : {tag_replace,group,mm_word_cnt}; // Using CAM output for tag selection
+//assign main_address  = (cam_wr) ? {tag,group,mm_word_cnt} : {fetching_address[address_width - 1:3],mm_word_cnt}; // Using CAM output for tag selection
 
 // Cache Controller FSM moves blocks between main mem and cache mem
 always @(posedge Clock) begin : Cache_Controller
@@ -144,11 +156,16 @@ always @(posedge Clock) begin : Cache_Controller
         Cache_Controller_State = IDLE;
         Writeback_State        = WRITEBACK0;
         Fetch_State            = FETCH0;
+        Pre_Fetch_State        = PREFETCH0;
         Done                   = 1'd0;
         writeback              = 1'd0;
         fetch                  = 1'd0;
         cam_wr                 = 1'd0;
+        prefetch               = 1'b1;
+        fetching_address       = 1'd0;
+        prefetch_address       = 1'd0;
         mm_word_cnt            = {word_addr_width {1'd0}};
+		requested_word		   = {word_addr_width {1'd0}};
         cm_word_cnt            = {word_addr_width {1'd0}};
         dirty_bit              = {(set_addr_width+group_addr_width){1'd0}};
         for(i=0; i<2**group_addr_width; i=i+1) begin
@@ -160,15 +177,23 @@ always @(posedge Clock) begin : Cache_Controller
             IDLE: begin
                 fetch       = 1'd0;
                 writeback   = 1'd0;
-                mm_word_cnt = {word_addr_width{1'd0}};
-                cm_word_cnt = {word_addr_width{1'd0}};
+                cm_word_cnt          = {word_addr_width{1'd0}};
+                mm_word_cnt          = {word_addr_width{1'd0}};
+                requested_word       = {word_addr_width{1'd0}};
                 if(!cam_hit) begin // TAG is not stored in CAM -> MISS
                     Done = 1'd0; // STALL CPU
                     if(dirty_bit[{set_control,group}]) begin
                         Cache_Controller_State = WRITEBACK;
                     end
                     else begin
+                        cam_wr              = 1'd1;
+                        mm_word_cnt         = MEM_address[2:0];
+                        requested_word      = MEM_address[2:0];
+                        cm_word_cnt         = MEM_address[2:0];
+                        fetching_address    = MEM_address;
+                        Fetch_State         = FETCH0;
                         Cache_Controller_State = FETCH;
+                        prefetch = 1'b1;
                     end
                 end
                 else begin // -> HIT
@@ -211,27 +236,100 @@ always @(posedge Clock) begin : Cache_Controller
                     // This allows for 1 cycle per word
                     // Cache Memory write enable should not be high until output of Main Mem is valid -> 1 cycle startup delay
                 case (Fetch_State)
-
-                    // TODO: remoce fetch0
                     FETCH0: begin // First Fetch cycle, write new tag to CAM and request word zero of block from main mem
+                        cam_wr = 1'd0;
+                        fetch = 1'd1;
+                        mm_word_cnt = mm_word_cnt + 1'd1;
                         Fetch_State = FETCH1;
-                        cam_wr = 1'd1;
                     end
                     FETCH1: begin // Word zero output of main mem is ready, begin writing to cache mem
-                        cam_wr = 1'd0;
-                        Fetch_State = FETCH2;
                         mm_word_cnt = mm_word_cnt + 1'd1;
-                        fetch = 1'd1;
+                        cm_word_cnt = cm_word_cnt + 1'd1;
+
+                        // Set to 1 because we always present the critical word first so the CPU can begin execution
+                        Done = 1'b1;
+                        Fetch_State = FETCH2;
                     end
                     FETCH2: begin // Write words 1 through end of block to cache
                         mm_word_cnt = mm_word_cnt + 1'd1;
                         cm_word_cnt = cm_word_cnt + 1'd1;
-                        if(~|mm_word_cnt)begin // all words have been fetched from main memory
+
+                        // Checks the current address we are fetching against the address requested by the CPU
+                        // If the fethcing address is one behind the requested addr then we dont stall because we 
+                        // can give the CPU the next word.
+                        if (fetching_address == (MEM_address - 1'b1)) begin
+                            Done = 1'b1;    
+                        end
+                        else Done = 1'b0;
+                        // Incremenet the fetching address after the comparison
+                        // Needs to do this so you dont access information outside of the designated group
+                        fetching_address = {fetching_address[address_width - 1 :3], fetching_address[2:0] + 1'b1};
+
+                        // Checks to see if we wrapped around and finished the block from the critical word
+                        if(cm_word_cnt == requested_word)begin 
+                            // Prefetch the next block, currently will load in the data in the same order as the previous fetch
                             Fetch_State = FETCH3;
                         end
                     end
+                    // TODO: NEVER ENTER THIS SO GET RID AT SOME POINT
                     FETCH3: begin
+                        // Done = 1'b1;
+                        if(prefetch) begin
+                            prefetch_address = {fetching_address[address_width - 1 :5], fetching_address[4:3] + 1'b1, 3'b000};
+                            Cache_Controller_State = PREFETCH;
+                            prefetch = 1'b0;
+                            Done = 1'b0;
+                            fetch = 1'b0;
+                            cm_word_cnt = 1'd0;
+                            mm_word_cnt = 1'd0;
+                        end
+                        else begin
+                            Cache_Controller_State = IDLE; // Fetch operation is complete
+                            fetch = 1'd0;
+                        end
+                        set_replace[group] = set_replace[group] + 1'd1; // next time replace the next set
                         Fetch_State = FETCH0; // for next fetch operation
+                    end
+                endcase // Fetch_State
+            end // FETCH
+
+            // TODO: Implement this
+            PREFETCH: begin
+                // During fetch a block is moved from main memory to cache memory 1 word at a time
+                // Memories evaluate inputs on positive clock edge -> need source address 1 word ahead of dest
+                    // This allows for 1 cycle per word
+                    // Cache Memory write enable should not be high until output of Main Mem is valid -> 1 cycle startup delay
+                case (Pre_Fetch_State)
+
+                    // TODO: remoce fetch0
+                    PREFETCH0: begin // First Fetch cycle, write new tag to CAM and request word zero of block from main mem
+                        Pre_Fetch_State = PREFETCH1;
+                        cam_wr = 1'd1;
+                    end
+                    PREFETCH1: begin // Word zero output of main mem is ready, begin writing to cache mem
+                        cam_wr = 1'd0;
+                        fetch = 1'd1;
+                        mm_word_cnt = mm_word_cnt + 1'd1;
+                        Pre_Fetch_State = PREFETCH2;
+                    end
+                    PREFETCH2: begin // Write words 1 through end of block to cache
+                        mm_word_cnt = mm_word_cnt + 1'd1;
+                        cm_word_cnt = cm_word_cnt + 1'd1;
+
+                        if(prefetch_address == (MEM_address)) begin
+                            Done = 1'b1;
+
+                        end
+                        else Done = 1'b0;
+
+                        
+                        prefetch_address= {prefetch_address[address_width - 1 :3], prefetch_address[2:0] + 1'b1};
+                        if(~|mm_word_cnt)begin // all words have been fetched from main memory
+                            Pre_Fetch_State = PREFETCH3;
+                        end
+                    end
+                    PREFETCH3: begin
+                        Pre_Fetch_State = PREFETCH0; // for next fetch operation
                         Cache_Controller_State = IDLE; // Fetch operation is complete
                         fetch = 1'd0;
                         set_replace[group] = set_replace[group] + 1'd1; // next time replace the next set
