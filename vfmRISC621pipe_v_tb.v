@@ -11,6 +11,7 @@ reg         Resetn_tb       ; // Active low reset signal
 reg         Clock_tb        ;
 reg  [ 4:0] SW_in_tb        ; // Switches In
 wire [ 7:0] Display_out_tb  ; // LEDs Out
+reg [15:0] interrupt_input;
 
 
 wire [15:0] Output_IO_0_tb ;
@@ -315,13 +316,14 @@ integer i;
 //     $stop();
 // end
 
-
+assign dut.interrupt_input = interrupt_input;
 
 initial begin 
     // Reset DUT
     Resetn_tb = 1'd0;
     SW_in_tb  = 5'b00000;
     clock_count = 16'd0;
+    interrupt_input = 16'd0;
     k = 0;
     repeat (4) @(posedge Clock_tb);
 
@@ -330,6 +332,11 @@ initial begin
 
     // Assert inputs to desired value
     SW_in_tb  = 5'b01111;
+
+
+    repeat (50) @(posedge Clock_tb);
+
+    interrupt_input = 16'd99;
 
 /**********************************************************************************************
 *   - Run simulation for 33 clocks, without pipelining this example required 81.              *

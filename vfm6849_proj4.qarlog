@@ -1,0 +1,92 @@
+Quartus Prime Archive log --	C:/Users/Vincent/Documents/repos/DCS/vfm6849_proj4.qarlog
+
+Archive:	C:/Users/Vincent/Documents/repos/DCS/vfm6849_proj4.qar
+Date:		Sat Mar 09 10:01:15 2024
+Quartus Prime		18.1.0 Build 625 09/12/2018 SJ Lite Edition
+
+	=========== Files Selected: ===========
+C:/Users/Vincent/Documents/repos/DCS/FPAdd.cmp
+C:/Users/Vincent/Documents/repos/DCS/FPAdd.qip
+C:/Users/Vincent/Documents/repos/DCS/FPAdd.sip
+C:/Users/Vincent/Documents/repos/DCS/FPAdd.spd
+C:/Users/Vincent/Documents/repos/DCS/FPAdd.v
+C:/Users/Vincent/Documents/repos/DCS/FPAdd/FPAdd_0002.vhd
+C:/Users/Vincent/Documents/repos/DCS/FPAdd/dspba_library.vhd
+C:/Users/Vincent/Documents/repos/DCS/FPAdd/dspba_library_package.vhd
+C:/Users/Vincent/Documents/repos/DCS/FPAddWrap_v.v
+C:/Users/Vincent/Documents/repos/DCS/FPAdd_sim/FPAdd.vo
+C:/Users/Vincent/Documents/repos/DCS/FPDiv.cmp
+C:/Users/Vincent/Documents/repos/DCS/FPDiv.qip
+C:/Users/Vincent/Documents/repos/DCS/FPDiv.sip
+C:/Users/Vincent/Documents/repos/DCS/FPDiv.spd
+C:/Users/Vincent/Documents/repos/DCS/FPDiv.v
+C:/Users/Vincent/Documents/repos/DCS/FPDiv/FPDiv_0002.vhd
+C:/Users/Vincent/Documents/repos/DCS/FPDiv/FPDiv_0002_memoryC0_uid112_invTables_lutmem.hex
+C:/Users/Vincent/Documents/repos/DCS/FPDiv/FPDiv_0002_memoryC1_uid115_invTables_lutmem.hex
+C:/Users/Vincent/Documents/repos/DCS/FPDiv/dspba_library.vhd
+C:/Users/Vincent/Documents/repos/DCS/FPDiv/dspba_library_package.vhd
+C:/Users/Vincent/Documents/repos/DCS/FPDiv_sim/FPDiv.vo
+C:/Users/Vincent/Documents/repos/DCS/FPDiv_sim/FPDiv_memoryC0_uid112_invTables_lutmem.hex
+C:/Users/Vincent/Documents/repos/DCS/FPDiv_sim/FPDiv_memoryC1_uid115_invTables_lutmem.hex
+C:/Users/Vincent/Documents/repos/DCS/FPMult.cmp
+C:/Users/Vincent/Documents/repos/DCS/FPMult.qip
+C:/Users/Vincent/Documents/repos/DCS/FPMult.sip
+C:/Users/Vincent/Documents/repos/DCS/FPMult.spd
+C:/Users/Vincent/Documents/repos/DCS/FPMult.v
+C:/Users/Vincent/Documents/repos/DCS/FPMult/FPMult_0002.vhd
+C:/Users/Vincent/Documents/repos/DCS/FPMult/dspba_library.vhd
+C:/Users/Vincent/Documents/repos/DCS/FPMult/dspba_library_package.vhd
+C:/Users/Vincent/Documents/repos/DCS/FPMult_sim/FPMult.vo
+C:/Users/Vincent/Documents/repos/DCS/FPSub.cmp
+C:/Users/Vincent/Documents/repos/DCS/FPSub.qip
+C:/Users/Vincent/Documents/repos/DCS/FPSub.sip
+C:/Users/Vincent/Documents/repos/DCS/FPSub.spd
+C:/Users/Vincent/Documents/repos/DCS/FPSub.v
+C:/Users/Vincent/Documents/repos/DCS/FPSub/FPSub_0002.vhd
+C:/Users/Vincent/Documents/repos/DCS/FPSub/dspba_library.vhd
+C:/Users/Vincent/Documents/repos/DCS/FPSub/dspba_library_package.vhd
+C:/Users/Vincent/Documents/repos/DCS/FPSubWrap_v.v
+C:/Users/Vincent/Documents/repos/DCS/FPSub_sim/FPSub.vo
+C:/Users/Vincent/Documents/repos/DCS/TestBenchControl.vh
+C:/Users/Vincent/Documents/repos/DCS/assignment_defaults.qdf
+C:/Users/Vincent/Documents/repos/DCS/branchPred_v.v
+C:/Users/Vincent/Documents/repos/DCS/db/vfm6849_piped_v.cmp.rdb
+C:/Users/Vincent/Documents/repos/DCS/fpdivwrap_v.v
+C:/Users/Vincent/Documents/repos/DCS/fpmultwrap_v.v
+C:/Users/Vincent/Documents/repos/DCS/test16.mif
+C:/Users/Vincent/Documents/repos/DCS/test16_MM.mif
+C:/Users/Vincent/Documents/repos/DCS/vfm6849_piped_v.qpf
+C:/Users/Vincent/Documents/repos/DCS/vfm6849_piped_v.qsf
+C:/Users/Vincent/Documents/repos/DCS/vfm6849_piped_v.sdc
+C:/Users/Vincent/Documents/repos/DCS/vfm6849_rom1.qip
+C:/Users/Vincent/Documents/repos/DCS/vfm6849_rom1.v
+C:/Users/Vincent/Documents/repos/DCS/vfm6849_rom1_bb.v
+C:/Users/Vincent/Documents/repos/DCS/vfmRISC621_ram1.qip
+C:/Users/Vincent/Documents/repos/DCS/vfmRISC621_ram1.v
+C:/Users/Vincent/Documents/repos/DCS/vfmRISC621_ram1_bb.v
+C:/Users/Vincent/Documents/repos/DCS/vfmRISC621_ram2.qip
+C:/Users/Vincent/Documents/repos/DCS/vfmRISC621_ram2.v
+C:/Users/Vincent/Documents/repos/DCS/vfmRISC621_ram2_bb.v
+C:/Users/Vincent/Documents/repos/DCS/vfmRISC621pipe_v.v
+C:/Users/Vincent/Documents/repos/DCS/vfmRISC621pipe_v_tb.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_CAM_v2.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_cache_4w_PM_v2.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_cache_4w_v2.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_cache_4w_v2_ram.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_cache_4w_v_tb.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_cache_v.qip
+C:/Users/Vincent/Documents/repos/DCS/vfm_cache_v.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_cache_v_bb.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_ir2assembly_v.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_pll.ppf
+C:/Users/Vincent/Documents/repos/DCS/vfm_pll.qip
+C:/Users/Vincent/Documents/repos/DCS/vfm_pll.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_pll_bb.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_proc_inst_v.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_ram.qip
+C:/Users/Vincent/Documents/repos/DCS/vfm_ram.v
+C:/Users/Vincent/Documents/repos/DCS/vfm_ram_bb.v
+	======= Total: 81 files to archive =======
+
+	================ Status: ===============
+All files archived successfully.

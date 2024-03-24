@@ -41,7 +41,7 @@ input [15:0]       In11,
 input [15:0]       In12,
 input [15:0]       In13,
 input [15:0]       In14,
-input [15:0]       In15,
+input [15:0]       In15,            // Interrupt input represented as a char in the lower half of the input
 
 // These signals are used for inter-core communication using OUT_IC
 // Are used as the tri-state buffer inputs for the input peripherals for other cores
@@ -76,6 +76,8 @@ parameter INSTR_WIDTH = 16;
     //reg-mem data transfer
 localparam [5:0] LD_IC   = 6'b000000 ; // Load
 localparam [5:0] ST_IC   = 6'b000001 ; // Store
+localparam [5:0] LDS_IC   = 6'b000010 ; // Load
+localparam [5:0] STS_IC   = 6'b000011 ; // Store
 
 // FP INSTRUCTIONS
 localparam [5:0] FPADD_IC = 6'b001000; // FPADD
@@ -181,6 +183,7 @@ reg  [INSTR_WIDTH-1:0]          IR1            ; // Instruction Register 1
 reg  [INSTR_WIDTH-1:0]          MAB            ; // Memory Address B
 reg  [INSTR_WIDTH-1:0]          MAX            ; // Memory Address X
 reg  [INSTR_WIDTH-1:0]          MAeff          ; // Memory Address Effective
+reg  [INSTR_WIDTH-1:0]          next_MAeff          ; // Memory Address Effective
 reg  [INSTR_WIDTH-1:0]          MM_in          ; // Data-Memory Input
 reg  [INSTR_WIDTH-1:0]          TA             ; // Temporary Input of Arithmetic-Logic-Unit "A"
 reg  [INSTR_WIDTH-1:0]          TB             ; // Temporary Input of Arithmetic-Logic-Unit "B"
@@ -230,6 +233,12 @@ wire jumpTaken;
 
 wire stall_pipe;
 wire pred_correct;
+wire begin_interrupt;
+reg [7:0] interrupt_input;
+reg disable_interrupt;
+
+
+assign begin_interrupt = (interrupt_input == 8'd99) ? 1'b1 : 1'b0;
 
 
 reg enable_add;
@@ -307,6 +316,7 @@ vfm_cache_4w_v2 MM (
     .Resetn      ( Resetn_pin               ), // input
     .MEM_address ( MAeff        [13:0]      ), // input   // Address coming from the CPU
     .MEM_in      ( MM_in        [INSTR_WIDTH-1:0]      ), // input   // Write-Back data from the CPU
+    .next_addr   ( next_MAeff            ),
     .WR          ( WR_DM                    ), // input   // Write-Enable from the CPU
     .Clock       ( Clock_not                ), // input
     .MEM_out     ( MM_out       [INSTR_WIDTH-1:0]      ), // output  // Data Stored at the Address pointed to by MEM_address
@@ -367,6 +377,7 @@ assign stall_pipe = PM_Cache_done && MM_Cache_done && ~FPSUB_stall && ~FPADD_sta
 always@(posedge Clock_pin) begin : my_CPU
 
 
+
 //----------------------------------------------------------------------------
 // RESET 
 //----------------------------------------------------------------------------
@@ -382,6 +393,7 @@ if (Resetn_pin == 0) begin
     MAB         = 16'd0;
     MAX         = 16'd0;
     MAeff       = 16'd0;
+    next_MAeff       = 16'd0;
     MM_in       = 16'd0;
     TA          = 16'd0;
     TB          = 16'd0;
@@ -389,7 +401,8 @@ if (Resetn_pin == 0) begin
     TALUL       = 16'd0;
     TSR         = 12'd0;
     SR          = 12'd0;
-    SP          = 16'hFFFF;
+    // Stack pointer starts at 0x00FF to be offset for each program
+    SP          = 16'h00FF;
     TALUout     = 16'd0;
     Ri1         = 4'd0;
     Rj1         = 4'd0;
@@ -425,7 +438,8 @@ if (Resetn_pin == 0) begin
     BPAddr = 8'd0;
     BPJumpType = 5'd0;
 
-
+    interrupt_input = 8'b0;
+    disable_interrupt = 1'b0;
 
     // Display_pin =  8'd0;
     IR1         = 16'hffff; // All IRs are initialized to the "don't care OpCode value 0xffff
@@ -447,14 +461,43 @@ else if (stall_pipe) begin // Normal Operation
     if ((stall_mc3 == 0) && (IR3 != 16'hFFFF)) begin 
         case (IR3[INSTR_WIDTH-1:10]) // Decode the OpCode of the IW
             LD_IC: begin
+                // R[IR3[4:0]] = MM_out;   
+                // PC = PC + 1'b1;
                 R[IR3[4:0]] = MM_out;   
                 // MAeff = PC;
+            end // LD_IC
+            LDS_IC: begin
+                case(Rj3)
+                    5'd0: begin
+                        PC = MM_out;   
+                    end
+                    5'd1: begin
+                        SR = MM_out;   
+                    end
+                    default: begin
+
+                    end
+                endcase
             end // LD_IC
             ST_IC: begin
                 MM_in = R[IR3[4:0]];
                 WR_DM = 1'b0;
                 // MAeff = PC;
                 // stall_mc0 = 1;
+            end // ST_IC
+            STS_IC: begin
+                case(Rj3)
+                    5'd0: begin
+                        MM_in = PC;
+                    end
+                    5'd1: begin
+                        MM_in = SR;
+                    end
+                    default: begin
+
+                    end
+                endcase
+                WR_DM = 1'b0;
             end // ST_IC
             CALL_IC: begin
                 PC = MAB + MAX;
@@ -545,9 +588,13 @@ else if (stall_pipe) begin // Normal Operation
 //----------------------------------------------------------------------------
     if ((stall_mc2 == 0) && (IR2 != 16'hFFFF)) begin
         case (IR2[15:10]) // Decode the OpCode of the IW
-            LD_IC: begin
-                MAeff = MAB + MAX; // Address Arithmetic to calculate the effective address
+            LD_IC, LDS_IC: begin
+                // MAeff = MAB + MAX; // Address Arithmetic to calculate the effective address
                 WR_DM = 1'b0; // For LD_IC we ensure here that WR_DM=0.
+                // WR_DM = 1'b0;
+                MAeff = MAB + MAX;
+                if (Ri2 == 2) SP = SP + 1'b1;
+
             end
             
             JMP_IC: begin
@@ -572,20 +619,31 @@ else if (stall_pipe) begin // Normal Operation
                         // 1st, From the instructions that perform a write-back:
                     if ((Rj2 == Ri3) && (IR3[INSTR_WIDTH-1:10] != LD_IC ) && (IR3[INSTR_WIDTH-1:10] !=  ST_IC) && (IR3[INSTR_WIDTH-1:10] != JMP_IC)) begin
                         MM_in = R[Ri3];
+                        if (Ri2 == 2) SP = SP - 1'b1;
                     end
                     // Next, resolve the SWAP write-back:
                     else if (Rj2 == Rj3 && IR3[INSTR_WIDTH-1:0] == SWAP_IC) begin
                         MM_in = R[Rj3];
+                        if (Ri2 == 2) SP = SP - 1'b1;
                     end
                     // OR without Data-Forwarding:
                     else begin
                         MM_in = R[Rj2];
+                        if (Ri2 == 2) SP = SP - 1'b1;
                     end
                 end
                 else begin
-                    WR_DM = 1'b0;
+                    // TODO: I changed this from a 1, I think this is correct but double check later.
+                    WR_DM = 1'b1;
+                    if (Ri2 == 2) SP = SP - 1'b1;
                 end
             end // ST_IC
+            STS_IC: begin
+                MAeff = MAB + MAX;
+                WR_DM = 1'b1;
+                if (Ri2 == 2) SP = SP - 1'b1;
+
+            end
             CALL_IC: begin
                 SP = $unsigned(SP - 1'b1);
                 MM_in = {SR, 4'b00};
@@ -913,7 +971,7 @@ else if (stall_pipe) begin // Normal Operation
 //----------------------------------------------------------------------------
     if ((stall_mc1 == 0) && (IR1 != 16'hffff)) begin // MC1, or Operand Fetch for manip inst, or Address_Fetch for transfer and flow control inst
         case (IR1[INSTR_WIDTH-1:10]) // Decode the OpCode of the IW
-            LD_IC, ST_IC: begin
+            LD_IC, ST_IC, LDS_IC, STS_IC: begin
                 // MAeff = PC;
                 MAB = PM_out; // Load MAB with base address constant value embedded in IW-field; the value 0 emulates the Register Direct AM
                 PC = PC + 1'b1;// Increment the PC to point to the location of the next IW
@@ -930,6 +988,7 @@ else if (stall_pipe) begin // Normal Operation
                     end
                     else begin MAX = R[Ri1]; end
                 end
+                next_MAeff = MAB + MAX;
             end //LD_IC, ST_IC
             
             JMP_IC: begin
@@ -957,6 +1016,7 @@ else if (stall_pipe) begin // Normal Operation
                 BPJumpType = IR1[4:0];
                 BP_en = 1'b1;
                 TPC = PC + 1'b1;
+                next_MAeff = MAB + MAX;
 
             end //LD_IC, ST_IC, JMP_IC
             CALL_IC: begin
@@ -1261,12 +1321,6 @@ else if (stall_pipe) begin // Normal Operation
         (IR3[INSTR_WIDTH-1:10] != ST_IC)    && 
         (IR3[INSTR_WIDTH-1:10] != CALL_IC)  && 
         (IR3[INSTR_WIDTH-1:10] != RET_IC)*/) begin 
-
-
-        // if(IR2[15:10] == JMP_IC && jumpTaken) begin
-        //     PC = MAB + MAX;
-        // end
-
         IR3 = IR2;
         Ri3 = Ri2;
         Rj3 = Rj2;
@@ -1280,13 +1334,10 @@ else if (stall_pipe) begin // Normal Operation
     // Instruction in MC1 can move to MC2; Rj2 may need to be = Ri1 for certain instruction sequences
     if ((stall_mc1 == 0) && 
         /*(IR2[INSTR_WIDTH-1:10] != JMP_IC)   && */
-        (IR2[INSTR_WIDTH-1:10] != LD_IC)    && 
-        (IR2[INSTR_WIDTH-1:10] != ST_IC)    && 
+        // (IR2[INSTR_WIDTH-1:10] != LD_IC)    && 
+        // (IR2[INSTR_WIDTH-1:10] != ST_IC)    && 
         (IR2[INSTR_WIDTH-1:10] != CALL_IC)  && 
         (IR2[INSTR_WIDTH-1:10] != RET_IC)) begin 
-
-        
-
         IR2 = IR1;
         Ri2 = Ri1;
         Rj2 = Rj1;
@@ -1299,15 +1350,13 @@ else if (stall_pipe) begin // Normal Operation
     end 
 
 
-    // if(~pred_correct && IR4[15:10] == JMP_IC) begin
-    // end
-
-
     // Instruction in MC0 can move to MC1;     
     if ((stall_mc0 == 0)        && 
         (IR1[INSTR_WIDTH-1:10] != JMP_IC)   &&  
         (IR1[INSTR_WIDTH-1:10] != LD_IC)    && 
         (IR1[INSTR_WIDTH-1:10] != ST_IC)    && 
+        (IR1[INSTR_WIDTH-1:10] != LDS_IC)    && 
+        (IR1[INSTR_WIDTH-1:10] != STS_IC)    && 
         (IR1[INSTR_WIDTH-1:10] != CALL_IC)  && 
         (IR1[INSTR_WIDTH-1:10] != RET_IC)) begin
         
@@ -1327,39 +1376,24 @@ else if (stall_pipe) begin // Normal Operation
         IR1 = 16'hffff; 
     end 
 
-    // // If mc0 is stalled and the output of main memory is store, keep on stalling MC0
-    // if ((stall_mc0 == 1) && (MM_out[13:8] == ST_IC)) begin
-    //     stall_mc0 = 1;
-    // end
-    // else begin
-    //     stall_mc0 = 0;
-    // end
 
     // After the JMP_IC instruction reaches MC3 OR (LD_IC or ST_C) reach MC1,
     // start refilling the pipe by removing the stalls. For JMP_IC the stalls are 
     // removed in this order: stall_mc0 --> stall_mc1 --> stall_mc2
     if (/*(IR3 == 14'h3fff) || */
-        (IR3[INSTR_WIDTH-1:10] == LD_IC)    || 
-        (IR3[INSTR_WIDTH-1:10] == ST_IC)    || 
+        (IR2[INSTR_WIDTH-1:10] == LD_IC)    || 
+        (IR2[INSTR_WIDTH-1:10] == ST_IC)    || 
+        (IR2[INSTR_WIDTH-1:10] == LDS_IC)    || 
+        (IR2[INSTR_WIDTH-1:10] == STS_IC)    || 
         (IR3[INSTR_WIDTH-1:10] == JMP_IC)   || 
         (IR4[INSTR_WIDTH-1:10] == CALL_IC)  || 
         (IR4[INSTR_WIDTH-1:10] == RET_IC)) begin
         stall_mc0 = 0; 
-        // MAeff = PC;
-
-        // after this also reset the Ri1 Ri2 Ri3 and Rj1 Rj2 Rj3 regs
-        // Ri2 = 4'd0;
-        // Rj2 = 4'd0;
-        // Ri3 = 4'd0;
-        // Rj3 = 4'd0;
     end
 
     if (IR4[15:10] == JMP_IC && ~pred_correct) begin
         PC = TPC;
         BP_en = 1'b0; 
-        // stall_mc3 = 1'b1;
-        // stall_mc2 = 1'b1;
-        // stall_mc1 = 1'b1;
         IR1 = 16'hffff;
         Ri1 = 5'b11111;
         Rj1 = 5'b11111;
@@ -1367,6 +1401,19 @@ else if (stall_pipe) begin // Normal Operation
 
     end
 
+    if (begin_interrupt) begin
+        stall_mc0 = 1;
+    end
+
+    // interrupt caused the pipeline to flush, so change execution to the interrupt vector
+    if (begin_interrupt && (IR1 == 16'hFFFF) && (IR2 == 16'hFFFF) && (IR3 == 16'hFFFF) && (IR4 == 16'hFFFF)) begin
+        // TODO: make the PC goto interrupt address, but 5 for testing
+        PC = 5;
+        disable_interrupt = 1'b1;
+        stall_mc0 = 0;
+    end
+
+interrupt_input = (~disable_interrupt) ? In15[7:0] : 8'd0;
 
 //---------------------------------------------------------------------------
 // STALL FOR MEMORY TO BE DONE

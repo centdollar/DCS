@@ -115,6 +115,8 @@ always @ (*) begin
     else case (IR[15:10])
 			6'b000000 : ICis = {"LD R", 	IR3to0, ", R", IR7to4, ":"}; //LD
 			6'b000001 : ICis = {"ST R", 	IR3to0, ", R", IR7to4, ":"}; //ST
+			6'b000010 : ICis = {"LDS R", 	IR3to0, ", R", IR7to4, ":"}; //LDS
+			6'b000011 : ICis = {"STS R", 	IR3to0, ", R", IR7to4, ":"}; //STS
 			6'b100011 : ICis = {"CPY R", 	IR7to4, ", R", IR3to0, ":"}; //CPY
 			6'b100010 : ICis = {"SWP R", 	IR7to4, ", R", IR3to0, ":"}; //SWAP
 			6'b000100 : ICis = {"JMP ", sbit,  8'h3D, sbit_val,  8'h3B}; //JUMP
