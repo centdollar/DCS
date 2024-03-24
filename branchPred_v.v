@@ -1,5 +1,6 @@
 `timescale 1ps/1ps
 
+// TODO: Issue where if two jumps are too close together it will predict right but not say the prediction was correct 
 module branchPred_v (
     input clk,
     input resetn,
@@ -105,7 +106,7 @@ else if(enable) begin
 
                 // JN1: begin if (statusBits[10] == 1) PC = MAeff; else PC = PC; end
                 JN1: begin 
-                    if (statusBits[11]  == 1) begin
+                    if (statusBits[10]  == 1) begin
                         if(predictStates[targetIndex] == w_taken) predictStates[targetIndex] = s_taken;  
                         if(predictStates[targetIndex] == s_taken) predictStates[targetIndex] = s_taken;  
                         if(predictStates[targetIndex] == w_ntaken) predictStates[targetIndex] = w_taken;  
@@ -122,7 +123,7 @@ else if(enable) begin
                 end
                 // JV1: begin if (statusBits[9]  == 1) PC = MAeff; else PC = PC; end
                 JV1: begin 
-                    if (statusBits[11]  == 1) begin
+                    if (statusBits[9]  == 1) begin
                         if(predictStates[targetIndex] == w_taken) predictStates[targetIndex] = s_taken;  
                         if(predictStates[targetIndex] == s_taken) predictStates[targetIndex] = s_taken;  
                         if(predictStates[targetIndex] == w_ntaken) predictStates[targetIndex] = w_taken;  
@@ -139,7 +140,7 @@ else if(enable) begin
                 end
                 // JZ1: begin if (statusBits[8]  == 1) PC = MAeff; else PC = PC; end
                 JZ1: begin 
-                    if (statusBits[11]  == 1) begin
+                    if (statusBits[8]  == 1) begin
                         if(predictStates[targetIndex] == w_taken) predictStates[targetIndex] = s_taken;  
                         if(predictStates[targetIndex] == s_taken) predictStates[targetIndex] = s_taken;  
                         if(predictStates[targetIndex] == w_ntaken) predictStates[targetIndex] = w_taken;  
@@ -232,7 +233,7 @@ else if(enable) begin
             case (jumpType)
                 // JC1: begin if (statusBits[11] == 1) begin
                 JC1: begin 
-                    if (statusBits[8]  == 1) begin
+                    if (statusBits[11]  == 1) begin
                         if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
                         if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
                         if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  
@@ -253,7 +254,7 @@ else if(enable) begin
 
                 // JN1: begin if (statusBits[10] == 1) PC = MAeff; else PC = PC; end
                 JN1: begin 
-                    if (statusBits[8]  == 1) begin
+                    if (statusBits[10]  == 1) begin
                         if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
                         if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
                         if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  
@@ -270,7 +271,7 @@ else if(enable) begin
                 end
                 // JV1: begin if (statusBits[9]  == 1) PC = MAeff; else PC = PC; end
                 JV1: begin 
-                    if (statusBits[8]  == 1) begin
+                    if (statusBits[9]  == 1) begin
                         if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
                         if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
                         if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  
@@ -304,7 +305,7 @@ else if(enable) begin
                 end
                 // JC0: begin if (statusBits[11] == 0) PC = MAeff; else PC = PC; end
                 JC0: begin 
-                    if (statusBits[8]  == 0) begin
+                    if (statusBits[11]  == 0) begin
                         if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
                         if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
                         if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  
@@ -321,7 +322,7 @@ else if(enable) begin
                 end
                 // JN0: begin if (statusBits[10] == 0) PC = MAeff; else PC = PC; end
                 JN0: begin 
-                    if (statusBits[8]  == 0) begin
+                    if (statusBits[10]  == 0) begin
                         if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
                         if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
                         if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  
@@ -338,7 +339,7 @@ else if(enable) begin
                 end
                 // JV0: begin if (statusBits[9]  == 0) PC = MAeff; else PC = PC; end
                 JV0: begin 
-                    if (statusBits[8]  == 0) begin
+                    if (statusBits[9]  == 0) begin
                         if(predictStates[targetWriteIndex - 1] == w_taken) predictStates[targetWriteIndex - 1] = s_taken;  
                         if(predictStates[targetWriteIndex - 1] == s_taken) predictStates[targetWriteIndex - 1] = s_taken;  
                         if(predictStates[targetWriteIndex - 1] == w_ntaken) predictStates[targetWriteIndex - 1] = w_taken;  

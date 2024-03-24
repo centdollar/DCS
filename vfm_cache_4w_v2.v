@@ -30,6 +30,7 @@ input                          Clock       ,
 input                          Resetn      ,
 input                          WR          ,
 input      [address_width-1:0] MEM_address , // To speedup synthesis and simulation only 12K are being instantiated
+input      [address_width-1:0] next_addr   ,
 input      [data_width-1   :0] MEM_in      ,
 output     [data_width-1   :0] MEM_out     ,
 output reg                     Done          // Means READ or WRITE ACCESS is complete, i.e. the output is valid during a READ, and done updating location during a WRITE
